@@ -684,7 +684,7 @@ document.addEventListener('click',function(e){
     state.projects.forEach(function(p){var i=p.flags.indexOf(id);if(i>=0)p.flags.splice(i,1);});
     renderSettings();renderProjects();
   }
-  else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:140,meet:0});renderPMs();renderProjects();focusLast('pmsBody');}
+  else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:160,meet:0});renderPMs();renderProjects();focusLast('pmsBody');}
   else if(act==='delPM'){
     remove(state.pms,id);
     state.projects.forEach(function(p){
@@ -748,7 +748,7 @@ function loadExample(){
   selected=null;openProj={};state.pms=[];state.projects=[];
   var s=state.settings,t=s.types,start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
   var pm=function(code,cap,meet){var p={id:uid(),code:code,cap:cap,meet:meet};state.pms.push(p);return p.id;};
-  var ab=pm('AB',140,10),ck=pm('CK',140,10),ms=pm('MS',100,6);
+  var ab=pm('AB',160,10),ck=pm('CK',160,10),ms=pm('MS',160,6);
   var pr=function(name,pmId,ti,c,off,o){
     o=o||{};
     var ev=start+off,type=t[ti]||t[0],x=o.flag?s.extras[0]:null;
@@ -790,7 +790,7 @@ function sanitize(d){
     extras:Array.isArray(s.extras)?arr(s.extras).map(function(x){return {id:str(x.id,40)||uid(),name:str(x.name,60),pct:n(x.pct,0)};}):ds.extras,
     types:arr(s.types).map(function(t){return {id:str(t.id,40)||uid(),name:str(t.name,80),hours:n(t.hours,0)};}),
     phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:n(p.from,0),to:n(p.to,0),pct:n(p.pct,0)};})
-  },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,140),meet:n(p.meet,0)};}),projects:[]};
+  },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,160),meet:n(p.meet,0)};}),projects:[]};
   out.projects=arr(d.projects).map(function(p){
     var pm=str(p.pm,40),type=str(p.type,40),c=str(p.cls,1).toUpperCase(),lead=Math.round(n(p.lead,0));
     return {id:str(p.id,40)||uid(),name:str(p.name,120),pm:has(out.pms,pm)?pm:'',type:has(out.settings.types,type)?type:'',
