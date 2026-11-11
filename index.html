@@ -26,6 +26,7 @@ nav a[aria-current=page]{background:#fff;color:var(--accent);font-weight:600}
 nav a:focus-visible{outline:2px solid #f59e0b;outline-offset:1px}
 main{max-width:1200px;margin:0 auto;padding:12px}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.dirty{align-self:center;flex:1 1 100%;color:#7a4b00;font-size:.88rem}
 section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px}
 h2{margin:0 0 10px;font-size:1.1rem}
 h3{margin:16px 0 6px;font-size:.95rem}
@@ -208,6 +209,7 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
     <label class="btn sec">Import JSON-Datei<input type="file" id="importFile" accept=".json,application/json"></label>
     <button type="button" class="sec" data-act="example">Beispieldaten laden</button>
     <button type="button" class="danger" data-act="clear">Projekte löschen</button>
+    <span id="dirtyMsg" class="dirty" role="status" hidden>Projekte sind noch nicht gesichert – sie gehen beim Schließen oder Neuladen verloren. Bitte als JSON-Datei exportieren.</span>
   </div>
 
   <section>
@@ -372,6 +374,9 @@ var state=defaults();
 var selected=null;   // {pm:id|'team', i:Spaltenindex}
 var openProj={};     // aufgeklappte Projekte
 var openScore={};    // aufgeklappte Score-Bereiche
+var dirty=false;     // Projekte seit dem letzten Export/Import geändert
+function setDirty(v){dirty=!!v&&state.projects.length>0;$('dirtyMsg').hidden=!dirty;}
+window.addEventListener('beforeunload',function(e){if(dirty){e.preventDefault();e.returnValue='';}});
 
 /* ---------- Berechnung ---------- */
 function compute(){
@@ -672,6 +677,8 @@ function renderOutput(){
     var nm=esc(x.proj.name||'(ohne Namen)');
     if(!x.main)li.push('<li>Projekt „'+nm+'“ hat keinen Hauptansprechpartner; dessen Stunden fehlen in der Auslastung.</li>');
     if(!x.type)li.push('<li>Projekt „'+nm+'“ hat keine Größenklasse.</li>');
+    var ids=(x.main?[x.main.id]:[]).concat(x.members.map(function(m){return m.pm;}));
+    if(ids.some(function(v,i){return ids.indexOf(v)!==i;}))li.push('<li>Projekt „'+nm+'“: Ein PM ist mehrfach eingetragen; seine Stunden werden addiert.</li>');
     if(x.over)li.push('<li>Projekt „'+nm+'“: Die Themen-Anteile der weiteren PM liegen über 100 % und wurden auf 100 % gekürzt.</li>');
   });
   $('hints').innerHTML=(over?'':'<div class="ok" style="margin:0 0 6px">Kein PM liegt in einem Monat über 100 %.</div>')+(li.length?'<ul class="hints">'+li.join('')+'</ul>':'');
@@ -686,6 +693,7 @@ var NUMF={startMonth:1,startYear:1,months:1,buffer:1,facMin:1,facMax:1,overhead:
 function onEdit(el){
   var k=el.dataset.k,f=el.dataset.f;
   if(!k)return;
+  if(k==='proj'||k==='flag'||k==='score'||k==='member')setDirty(true);
   var pj;
   if(k==='flag'){
     pj=find(state.projects,el.dataset.id);
@@ -769,6 +777,7 @@ document.addEventListener('click',function(e){
   var act=b.dataset.act,id=b.dataset.id,s=state.settings,pj;
   if(act==='addType'){s.types.push({id:uid(),name:'Neue Größenklasse',hours:100});renderSettings();renderProjects();focusLast('typesBody');}
   else if(act==='delType'){
+    if(!usedOk(state.projects.filter(function(p){return p.type===id;}).length,'Diese Größenklasse'))return;
     remove(s.types,id);state.projects.forEach(function(p){if(p.type===id)p.type='';});
     renderSettings();renderProjects();
   }
@@ -776,12 +785,14 @@ document.addEventListener('click',function(e){
   else if(act==='delPhase'){remove(s.phases,id);renderSettings();}
   else if(act==='addExtra'){s.extras.push({id:uid(),name:'Neuer Aufwandsfaktor',pct:10});renderSettings();renderProjects();focusLast('extrasBody');}
   else if(act==='delExtra'){
+    if(!usedOk(state.projects.filter(function(p){return p.flags.indexOf(id)>=0;}).length,'Dieser Aufwandsfaktor'))return;
     remove(s.extras,id);
     state.projects.forEach(function(p){var i=p.flags.indexOf(id);if(i>=0)p.flags.splice(i,1);});
     renderSettings();renderProjects();
   }
   else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:160,meet:0});renderPMs();renderProjects();focusLast('pmsBody');}
   else if(act==='delPM'){
+    if(!usedOk(state.projects.filter(function(p){return p.pm===id||p.team.some(function(m){return m.pm===id;});}).length,'Dieser PM'))return;
     remove(state.pms,id);
     state.projects.forEach(function(p){
       if(p.pm===id)p.pm='';
@@ -816,11 +827,11 @@ document.addEventListener('click',function(e){
   }
   else if(act==='example'){
     if((state.pms.length||state.projects.length)&&!confirm('Team und Projekte durch Beispieldaten ersetzen? Die übrigen Einstellungen bleiben erhalten.'))return;
-    loadExample();saveConfig();return;
+    loadExample();saveConfig();setDirty(false);return;
   }
   else if(act==='clear'){
     if(!confirm('Wirklich alle Projekte löschen? Einstellungen und Team bleiben erhalten.'))return;
-    state.projects=[];openProj={};openScore={};selected=null;renderAll();return;
+    state.projects=[];openProj={};openScore={};selected=null;setDirty(false);renderAll();return;
   }
   else if(act==='resetSettings'){
     if(!confirm('Alle Einstellungen und das Team auf die Standardwerte zurücksetzen? Projekte verlieren dabei PM, Größenklasse und Aufwandsfaktoren.'))return;
@@ -828,12 +839,16 @@ document.addEventListener('click',function(e){
     keep.forEach(function(p){p.pm='';p.type='';p.flags=[];p.team=[];});
     state=defaults();state.projects=keep;selected=null;
     try{localStorage.removeItem(KEY);localStorage.removeItem(KEY_OLD);}catch(err){}
-    renderAll();return;
+    setDirty(true);renderAll();return;
   }
-  else if(act==='export'){exportJSON();return;}
+  else if(act==='export'){exportJSON();setDirty(false);return;}
   if(['addProj','delProj','addMember','delMember'].indexOf(act)<0)saveConfig();
+  if(['addProj','delProj','addMember','delMember','delPM','delType','delExtra'].indexOf(act)>=0)setDirty(true);
   renderOutput();
 });
+function usedOk(count,what){
+  return !count||confirm(what+' wird in '+count+(count===1?' Projekt':' Projekten')+' verwendet und dort entfernt. Trotzdem löschen?');
+}
 function focusLast(bodyId){
   var rows=$(bodyId).rows,r=rows[rows.length-1],el=r&&r.querySelector('input,select');
   if(el)el.focus();
@@ -916,9 +931,10 @@ function sanitize(d){
 function importFile(input){
   var file=input.files&&input.files[0];
   if(!file)return;
+  if((state.pms.length||state.projects.length)&&!confirm('Der Import ersetzt alle Einstellungen, das Team und alle Projekte durch den Inhalt der Datei. Fortfahren?')){input.value='';return;}
   var r=new FileReader();
   r.onload=function(){
-    try{state=sanitize(JSON.parse(String(r.result)));selected=null;openProj={};openScore={};renderAll();saveConfig();}
+    try{state=sanitize(JSON.parse(String(r.result)));selected=null;openProj={};openScore={};renderAll();saveConfig();setDirty(false);}
     catch(err){alert('Die Datei konnte nicht gelesen werden: '+err.message);}
     input.value='';
   };

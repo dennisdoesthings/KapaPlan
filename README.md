@@ -8,7 +8,7 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 - Einstellungen und PM-Kürzel werden lokal im Browser gespeichert (localStorage) und bleiben nach dem Neuladen erhalten
 - Projekte liegen nur im Arbeitsspeicher; Speichern über **Export als JSON-Datei**, Laden über **Import JSON-Datei**
 
-> Achtung: Beim Neuladen oder Schließen der Seite gehen die Projekte verloren. Vorher exportieren.
+> Achtung: Beim Neuladen oder Schließen der Seite gehen die Projekte verloren. Vorher exportieren. Die Seite zeigt einen Hinweis, solange Projekte nicht gesichert sind, und der Browser fragt vor dem Verlassen nach.
 > Die gespeicherten Einstellungen gelten nur für den jeweiligen Browser. Auf andere Geräte lassen sie sich per JSON-Export und -Import übertragen.
 
 ## Bedienung
