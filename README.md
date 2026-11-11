@@ -19,8 +19,8 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
    - **Erweiterte Einstellungen** (eingeklappt): Faktoren der Kundenklassen, Besonderheiten, Phasenverteilung.
    - Jede Änderung wird automatisch im Browser gespeichert.
 2. Seite **Planung**:
-   - Mit **+ Projekt** ein Projekt anlegen und aufklappen: Name, Eventdatum, Projekttyp, Kunde (A/B/C), Projektstart und Hauptansprechpartner wählen.
-   - Mit **+ Weiterer PM** zusätzliche PM zuordnen und deren Rolle und Gewicht festlegen.
+   - Mit **+ Projekt** ein Projekt anlegen und aufklappen: Name, Eventdatum, Projekttyp, Kunde (A/B/C) und Projektstart wählen.
+   - Unter **Projektmanager** steht der Hauptansprechpartner als erste Zeile mit seinem Anteil; mit **+ Weiterer PM** zusätzliche PM zuordnen und deren Rolle und Gewicht festlegen.
    - Der Zeitraum der Auslastung wird direkt über der Heatmap eingestellt.
 3. Heatmap, Hinweise und Projektübersicht werden bei jeder Änderung sofort neu berechnet. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
 

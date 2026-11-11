@@ -78,6 +78,8 @@ summary .pm{color:var(--muted);font-size:.88rem;white-space:nowrap}
 .mrow{display:grid;grid-template-columns:minmax(90px,1fr) minmax(150px,2fr) minmax(170px,1.4fr) auto;gap:6px;align-items:center;margin-bottom:6px}
 .val{display:flex;gap:6px;align-items:center;font-size:.85rem;color:var(--muted);white-space:nowrap}
 .val input{width:80px;flex:none}
+.val b{display:inline-block;width:80px;padding:0 9px;color:var(--text);white-space:nowrap}
+.rolefix{padding:0 9px;font-weight:600}
 .pact{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:12px}
 #advanced>summary{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 #advanced>summary h2,#advanced>summary .sub{margin:0}
@@ -111,6 +113,10 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
   main{padding:8px} section{padding:10px}
   .toolbar button,.toolbar .btn{flex:1 1 46%;justify-content:center}
   .mrow{grid-template-columns:1fr 1fr;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+  .mrow>*{min-width:0}
+  .val{white-space:normal}
+  .val b{width:auto;padding:0 4px 0 9px}
+  .rolefix{font-size:.9rem}
   .grid label.wide{grid-column:auto}
 }
 </style>
@@ -395,7 +401,7 @@ function compute(){
       total+=h;
       if(i>=0&&i<n){inRange+=h;add(rows[m.pm],i,p,h,['Durchführung'],ROLES.ort.short);}
     });
-    return {proj:p,type:t,extras:xs,main:rows[p.pm]?rows[p.pm].pm:null,members:members,total:total,inRange:inRange,over:tsum>100,ev:ev};
+    return {proj:p,type:t,extras:xs,mainShare:Math.max(0,1-tsum/100),main:rows[p.pm]?rows[p.pm].pm:null,members:members,total:total,inRange:inRange,over:tsum>100,ev:ev};
   });
   var team={cap:0,hours:[],items:[]};
   for(var i=0;i<n;i++){team.hours.push(0);team.items.push([]);}
@@ -485,10 +491,12 @@ function renderProjects(){
       '<label><span>Projekttyp</span><select '+a+' data-f="type">'+opts(s.types,p.type,'name','– offen –')+'</select></label>'+
       '<label><span>Kunde</span><select '+a+' data-f="cls">'+['A','B','C'].map(function(c){return '<option value="'+c+'"'+(c===p.cls?' selected':'')+'>'+c+' – '+CLS[c]+' (×'+fmtAuto(s.factors[c])+')</option>';}).join('')+'</select></label>'+
       '<label><span>Projektstart</span><select '+a+' data-f="lead">'+LEADS.map(function(l){return '<option value="'+l[0]+'"'+(l[0]===p.lead?' selected':'')+'>'+l[1]+'</option>';}).join('')+'</select></label>'+
-      '<label><span>Hauptansprechpartner</span><select '+a+' data-f="pm">'+opts(state.pms,p.pm,'code','– offen –')+'</select></label>'+
       '</div>'+
       (flags?'<div class="flags">'+flags+'</div>':'')+
-      (team?'<div class="team"><div class="tl">Weitere PM</div>'+team+'</div>':'')+
+      '<div class="team"><div class="tl">Projektmanager</div>'+
+      '<div class="mrow"><select aria-label="Hauptansprechpartner" '+a+' data-f="pm">'+opts(state.pms,p.pm,'code','– PM wählen –')+'</select>'+
+      '<span class="rolefix">Hauptansprechpartner</span><span class="val"><b class="mainshare"></b><span>vom Aufwand (Rest)</span></span><span></span></div>'+
+      team+'</div>'+
       '<div class="pact"><button type="button" class="sec" data-act="addMember" data-id="'+esc(p.id)+'">+ Weiterer PM</button>'+
       '<button type="button" class="del" data-act="delProj" data-id="'+esc(p.id)+'">Projekt löschen</button></div>'+
       '</div></details>';
@@ -513,6 +521,7 @@ function renderOutput(){
     var d=kids[i];
     if(!d||!d.querySelector)return;
     d.querySelector('.pn').textContent=x.proj.name||'Neues Projekt';
+    d.querySelector('.mainshare').textContent=fmtAuto(x.mainShare*100)+' %';
     d.querySelector('.pm').innerHTML=mLabel(x.ev)+' · '+teamText(x,false)+' · '+fmt(x.total)+' h';
   });
 
