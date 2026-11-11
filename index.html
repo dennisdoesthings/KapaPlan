@@ -55,9 +55,34 @@ table.edit td{min-width:86px}
 table.edit td.c{min-width:0;width:1%;text-align:center;white-space:nowrap}
 table.edit td.w{min-width:170px}
 table.edit td.d{min-width:190px}
-.flags{display:flex;flex-direction:column;gap:3px;min-width:150px}
-.flags label{display:flex;gap:6px;align-items:center;white-space:nowrap;font-size:.88rem}
+.grid label.wide{grid-column:span 2}
+.grid.one{grid-template-columns:minmax(150px,260px);margin-top:10px}
+.flags{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px}
+.flags label{display:flex;gap:6px;align-items:center;font-size:.9rem}
 .flags input{flex:none}
+details.proj{border:1px solid var(--line);border-radius:7px;margin-bottom:8px;background:#fff}
+details.proj[open]{border-color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+details>summary{cursor:pointer}
+details.proj>summary{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;padding:10px 12px;list-style:none}
+details.proj>summary::-webkit-details-marker{display:none}
+details.proj>summary::before{content:"▸";color:var(--muted);flex:none}
+details.proj[open]>summary::before{content:"▾"}
+details.proj>summary:hover{background:#f3f6fa}
+details>summary:focus-visible{outline:2px solid #f59e0b;outline-offset:1px}
+.pn{font-weight:600;flex:1 1 180px}
+summary .pm{color:var(--muted);font-size:.88rem;white-space:nowrap}
+.pbody{padding:4px 12px 12px;border-top:1px solid var(--line)}
+.pbody .grid{margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.team{margin-top:12px}
+.tl{font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.mrow{display:grid;grid-template-columns:minmax(90px,1fr) minmax(150px,2fr) minmax(170px,1.4fr) auto;gap:6px;align-items:center;margin-bottom:6px}
+.val{display:flex;gap:6px;align-items:center;font-size:.85rem;color:var(--muted);white-space:nowrap}
+.val input{width:80px;flex:none}
+.pact{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-top:12px}
+#advanced>summary{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+#advanced>summary h2,#advanced>summary .sub{margin:0}
+.period{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.9rem;color:var(--muted);margin-bottom:10px}
+.period select{width:auto}.period input{width:84px}
 .warn{background:#fff4e5;border:1px solid #f0b45c;color:#7a4b00;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:.9rem}
 .ok{color:var(--g-t);font-size:.9rem;margin-top:8px}
 .empty{color:var(--muted);font-style:italic;padding:8px 0}
@@ -85,6 +110,8 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 @media (max-width:600px){
   main{padding:8px} section{padding:10px}
   .toolbar button,.toolbar .btn{flex:1 1 46%;justify-content:center}
+  .mrow{grid-template-columns:1fr 1fr;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+  .grid label.wide{grid-column:auto}
 }
 </style>
 </head>
@@ -102,55 +129,58 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 <main>
   <div id="viewSettings" hidden>
   <div id="saveMsg"></div>
-  <section>
-    <h2>Allgemeine Einstellungen</h2>
-    <div class="grid">
-      <label style="grid-column:span 2"><span>Startmonat</span>
-        <div class="pair">
-          <select data-k="set" data-f="startMonth" id="sStartMonth" aria-label="Startmonat"></select>
-          <input type="number" data-k="set" data-f="startYear" id="sStartYear" min="2000" max="2100" aria-label="Startjahr">
-        </div>
-      </label>
-      <label><span>Anzahl Monate</span><input type="number" data-k="set" data-f="months" id="sMonths" min="1" max="60"></label>
-      <label><span>Pufferquote in %</span><input type="number" data-k="set" data-f="buffer" id="sBuffer" min="0" max="100"></label>
-      <label><span>Faktor Klasse A</span><input type="number" data-k="fac" data-f="A" id="sFacA" min="0" step="0.1"></label>
-      <label><span>Faktor Klasse B</span><input type="number" data-k="fac" data-f="B" id="sFacB" min="0" step="0.1"></label>
-      <label><span>Faktor Klasse C</span><input type="number" data-k="fac" data-f="C" id="sFacC" min="0" step="0.1"></label>
-    </div>
-    <p class="sub" style="margin-top:8px">Verplanbare Kapazität = Kapazität × (1 − Puffer)</p>
-
-    <h3>Projekttypen</h3>
-    <div class="scroll"><table class="edit">
-      <thead><tr><th>Bezeichnung</th><th>Basisstunden</th><th></th></tr></thead>
-      <tbody id="typesBody"></tbody>
-    </table></div>
-    <p><button type="button" class="sec" data-act="addType">+ Projekttyp</button></p>
-
-    <h3>Besonderheiten (je Projekt auswählbar, Zuschlag auf den Projektaufwand)</h3>
-    <div class="scroll"><table class="edit">
-      <thead><tr><th>Bezeichnung</th><th>Zuschlag %</th><th></th></tr></thead>
-      <tbody id="extrasBody"></tbody>
-    </table></div>
-    <p><button type="button" class="sec" data-act="addExtra">+ Besonderheit</button></p>
-
-    <h3>Phasenverteilung (Monate relativ zum Eventmonat, 0 = Eventmonat)</h3>
-    <div class="scroll"><table class="edit">
-      <thead><tr><th>Phase</th><th>von Monat</th><th>bis Monat</th><th>Anteil %</th><th></th></tr></thead>
-      <tbody id="phasesBody"></tbody>
-    </table></div>
-    <p class="sub" style="margin-top:8px">Halbe Monate sind möglich: „von −1,5“ bedeutet ab 6 Wochen vor dem Eventmonat. Angeschnittene Monate werden anteilig belastet.</p>
-    <p><button type="button" class="sec" data-act="addPhase">+ Phase</button></p>
-    <div id="phaseMsg"></div>
-  </section>
 
   <section>
-    <h2>Projektmanager</h2>
-    <p class="sub">Bitte nur Kürzel verwenden, keine Klarnamen. „Meetings“ = durchschnittliche Stunden pro Monat für Jours fixes und regelmäßige Termine (wöchentlich 2 h ≈ 9 h/Monat). Sie werden jeden Monat fest eingeplant.</p>
+    <h2>Team</h2>
+    <p class="sub">Nur Kürzel, keine Klarnamen. „Meetings“ = durchschnittliche Stunden pro Monat für Jours fixes und regelmäßige Termine (wöchentlich 2 h ≈ 9 h/Monat).</p>
     <div class="scroll"><table class="edit">
       <thead><tr><th>Kürzel</th><th>Kapazität (h/Monat)</th><th>Meetings (h/Monat)</th><th></th></tr></thead>
       <tbody id="pmsBody"></tbody>
     </table></div>
     <p><button type="button" class="sec" data-act="addPM">+ Projektmanager</button></p>
+    <div class="grid one">
+      <label><span>Puffer für Unvorhergesehenes in %</span><input type="number" data-k="set" data-f="buffer" id="sBuffer" min="0" max="100"></label>
+    </div>
+    <p class="sub" style="margin-top:6px">Dieser Anteil der Kapazität bleibt frei. Verplanbar = Kapazität × (1 − Puffer).</p>
+  </section>
+
+  <section>
+    <h2>Projekttypen</h2>
+    <p class="sub">Basisstunden = Gesamtaufwand eines normalen Projekts dieses Typs.</p>
+    <div class="scroll"><table class="edit">
+      <thead><tr><th>Bezeichnung</th><th>Basisstunden</th><th></th></tr></thead>
+      <tbody id="typesBody"></tbody>
+    </table></div>
+    <p><button type="button" class="sec" data-act="addType">+ Projekttyp</button></p>
+  </section>
+
+  <section>
+    <details id="advanced">
+      <summary><h2>Erweiterte Einstellungen</h2><span class="sub">Kundenklassen, Besonderheiten, Phasen – selten zu ändern</span></summary>
+
+      <h3>Kundenklassen (Faktor auf die Basisstunden)</h3>
+      <div class="grid">
+        <label><span>A – aufwendig</span><input type="number" data-k="fac" data-f="A" id="sFacA" min="0" step="0.1"></label>
+        <label><span>B – normal</span><input type="number" data-k="fac" data-f="B" id="sFacB" min="0" step="0.1"></label>
+        <label><span>C – einfach</span><input type="number" data-k="fac" data-f="C" id="sFacC" min="0" step="0.1"></label>
+      </div>
+
+      <h3>Besonderheiten (je Projekt auswählbar, Zuschlag auf den Aufwand)</h3>
+      <div class="scroll"><table class="edit">
+        <thead><tr><th>Bezeichnung</th><th>Zuschlag %</th><th></th></tr></thead>
+        <tbody id="extrasBody"></tbody>
+      </table></div>
+      <p><button type="button" class="sec" data-act="addExtra">+ Besonderheit</button></p>
+
+      <h3>Phasenverteilung (Monate relativ zum Eventmonat, 0 = Eventmonat)</h3>
+      <div class="scroll"><table class="edit">
+        <thead><tr><th>Phase</th><th>von Monat</th><th>bis Monat</th><th>Anteil %</th><th></th></tr></thead>
+        <tbody id="phasesBody"></tbody>
+      </table></div>
+      <p class="sub" style="margin-top:8px">Halbe Monate sind möglich: „von −1,5“ bedeutet ab 6 Wochen vor dem Eventmonat. Angeschnittene Monate werden anteilig belastet.</p>
+      <p><button type="button" class="sec" data-act="addPhase">+ Phase</button></p>
+      <div id="phaseMsg"></div>
+    </details>
   </section>
 
   <p><button type="button" class="danger" data-act="resetSettings">Einstellungen auf Standard zurücksetzen</button></p>
@@ -158,42 +188,47 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 
   <div id="viewPlan">
   <div class="toolbar">
-    <button type="button" data-act="example">Beispieldaten laden</button>
-    <button type="button" class="sec" data-act="export">Export als JSON-Datei</button>
+    <button type="button" data-act="export">Export als JSON-Datei</button>
     <label class="btn sec">Import JSON-Datei<input type="file" id="importFile" accept=".json,application/json"></label>
+    <button type="button" class="sec" data-act="example">Beispieldaten laden</button>
     <button type="button" class="danger" data-act="clear">Projekte löschen</button>
   </div>
 
   <section>
     <h2>Projekte</h2>
-    <p class="sub">Projektmanager, Projekttypen, Faktoren und Phasen werden auf der Seite <a href="#einstellungen">Einstellungen</a> gepflegt.</p>
-    <div class="scroll"><table class="edit">
-      <thead><tr><th>Projektname</th><th>PM</th><th>Projekttyp</th><th>Klasse</th><th>Besonderheiten</th><th>Eventdatum</th><th></th></tr></thead>
-      <tbody id="projBody"></tbody>
-    </table></div>
-    <p><button type="button" class="sec" data-act="addProj">+ Projekt</button></p>
+    <p class="sub">Zum Bearbeiten ein Projekt aufklappen. Team und Projekttypen stehen unter <a href="#einstellungen">Einstellungen</a>.</p>
+    <div id="projList"></div>
+    <p style="margin-bottom:0"><button type="button" data-act="addProj">+ Projekt</button></p>
   </section>
 
   <section>
-    <h2>Auslastung (Heatmap)</h2>
-    <p class="sub">Zelle = Auslastung in % und Stunden. Klick auf eine Zelle zeigt die enthaltenen Projekte.</p>
+    <h2>Auslastung</h2>
+    <div class="period">
+      <span>Zeitraum ab</span>
+      <select data-k="set" data-f="startMonth" id="sStartMonth" aria-label="Startmonat"></select>
+      <input type="number" data-k="set" data-f="startYear" id="sStartYear" min="2000" max="2100" aria-label="Startjahr">
+      <span>für</span>
+      <input type="number" data-k="set" data-f="months" id="sMonths" min="1" max="60" aria-label="Anzahl Monate">
+      <span>Monate</span>
+    </div>
     <div class="scroll" id="heat"></div>
     <div class="legend">
       <span><i style="background:var(--g)"></i>unter 80 %</span>
       <span><i style="background:var(--y)"></i>80–100 %</span>
       <span><i style="background:var(--r)"></i>über 100 %</span>
+      <span>Klick auf eine Zelle zeigt die Projekte.</span>
     </div>
     <div id="detail" hidden></div>
   </section>
 
   <section>
-    <h2>Projektübersicht</h2>
-    <div class="scroll" id="overview"></div>
+    <h2>Hinweise</h2>
+    <div id="hints"></div>
   </section>
 
   <section>
-    <h2>Hinweise</h2>
-    <div id="hints"></div>
+    <h2>Projektübersicht</h2>
+    <div class="scroll" id="overview"></div>
   </section>
   </div>
 </main>
@@ -205,6 +240,14 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 
 var MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 var MONS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+var CLS={A:'aufwendig',B:'normal',C:'einfach'};
+var LEADS=[[0,'Regulär (volle Vorlaufzeit)'],[6,'Kurzfristig – Start 6 Monate vorher'],[5,'Kurzfristig – Start 5 Monate vorher'],[4,'Kurzfristig – Start 4 Monate vorher'],[3,'Kurzfristig – Start 3 Monate vorher']];
+// Rollen weiterer PM: "thema" nimmt dem Hauptansprechpartner einen Anteil ab, "ort" sind Zusatzstunden im Eventmonat
+var ROLES={
+  thema:{label:'Thema / Teilbereich',short:'Thema',unit:'% vom Aufwand',def:20},
+  ort:{label:'Nur vor Ort (Aufbau, Durchführung, Abbau)',short:'Vor Ort',unit:'h im Eventmonat',def:30}
+};
+var MEET={name:'Regelmäßige Meetings'};
 var seq=0;
 function uid(){return 'i'+(++seq)+Math.random().toString(36).slice(2,7);}
 function $(id){return document.getElementById(id);}
@@ -212,6 +255,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function num(v){var n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:0;}
 function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
 function fmt(v,d){return v.toLocaleString('de-DE',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
+function fmtAuto(v){return fmt(v,v%1?1:0);}
 
 function defaults(){
   var now=new Date();
@@ -220,7 +264,6 @@ function defaults(){
       startMonth:now.getMonth()+1,startYear:now.getFullYear(),months:12,buffer:20,
       factors:{A:1.5,B:1,C:0.6},
       extras:[
-        {id:uid(),name:'Kurzfristig',pct:20},
         {id:uid(),name:'Politisch / besondere Anforderungen',pct:25}
       ],
       types:[
@@ -241,6 +284,8 @@ function defaults(){
     pms:[],projects:[]
   };
 }
+
+/* ---------- Lokale Speicherung der Einstellungen ---------- */
 var KEY='kapaplan.einstellungen.v1',storeOk=true;
 function saveConfig(){
   try{localStorage.setItem(KEY,JSON.stringify({settings:state.settings,pms:state.pms}));storeOk=true;}
@@ -257,7 +302,7 @@ function loadConfig(){
 }
 function renderSaveMsg(){
   $('saveMsg').innerHTML=storeOk
-    ?'<p class="sub">Einstellungen und PM-Kürzel werden bei jeder Änderung automatisch in diesem Browser gespeichert und bleiben nach dem Neuladen erhalten. Sie werden nicht übertragen und gelten nur für diesen Browser.</p>'
+    ?'<p class="sub">Alle Einstellungen werden automatisch in diesem Browser gespeichert und bleiben nach dem Neuladen erhalten. Sie gelten nur für diesen Browser und stecken zusätzlich in jeder Exportdatei.</p>'
     :'<div class="warn" role="alert" style="margin:0 0 12px">Dieser Browser erlaubt kein lokales Speichern. Die Einstellungen gehen beim Neuladen verloren – bitte per JSON-Export sichern.</div>';
 }
 function route(){
@@ -267,8 +312,10 @@ function route(){
   else{$('navPlan').setAttribute('aria-current','page');$('navSettings').removeAttribute('aria-current');}
 }
 window.addEventListener('hashchange',route);
+
 var state=defaults();
-var selected=null; // {pm:id|'team', i:Spaltenindex}
+var selected=null;   // {pm:id|'team', i:Spaltenindex}
+var openProj={};     // aufgeklappte Projekte
 
 /* ---------- Berechnung ---------- */
 function compute(){
@@ -282,10 +329,20 @@ function compute(){
     var meet=Math.max(0,p.meet||0);
     for(var i=0;i<n;i++){
       r.hours.push(meet);
-      r.items.push(meet?[{proj:{name:'Regelmäßige Meetings'},h:meet,phases:['–']}]:[]);
+      r.items.push(meet?[{proj:MEET,h:meet,phases:[],roles:[]}]:[]);
     }
     rows[p.id]=r;order.push(r);
   });
+  function add(row,i,p,h,phases,role){
+    if(!(h>0))return;
+    row.hours[i]+=h;
+    var it=null,list=row.items[i];
+    for(var k=0;k<list.length;k++)if(list[k].proj===p){it=list[k];break;}
+    if(!it){it={proj:p,h:0,phases:[],roles:[]};list.push(it);}
+    it.h+=h;
+    phases.forEach(function(x){if(it.phases.indexOf(x)<0)it.phases.push(x);});
+    if(it.roles.indexOf(role)<0)it.roles.push(role);
+  }
   var typeById={};s.types.forEach(function(t){typeById[t.id]=t;});
   var projs=state.projects.map(function(p){
     var t=typeById[p.type];
@@ -293,7 +350,13 @@ function compute(){
     var plus=xs.reduce(function(a,x){return a+x.pct;},0);
     var total=(t?Math.max(0,t.hours):0)*Math.max(0,s.factors[p.cls]||0)*Math.max(0,1+plus/100);
     var ev=Math.round(p.year)*12+clamp(Math.round(p.month),1,12)-1;
-    var inRange=0,row=rows[p.pm];
+
+    // 1. Aufwand nach Phasen auf Monate relativ zum Event verteilen
+    var dist={};
+    function put(m,h,name){
+      var d=dist[m]||(dist[m]={h:0,phases:[]});
+      d.h+=h;if(d.phases.indexOf(name)<0)d.phases.push(name);
+    }
     s.phases.forEach(function(ph){
       // Monat m belegt das Intervall [m, m+1); angeschnittene Monate zählen anteilig
       var a=clamp(Math.min(ph.from,ph.to),-120,120),b=clamp(Math.max(ph.from,ph.to),-120,120)+1;
@@ -301,19 +364,38 @@ function compute(){
       if(!all)return;
       for(var m=Math.floor(a);m<b;m++){
         var h=all*(Math.min(b,m+1)-Math.max(a,m))/(b-a);
-        var i=ev+m-start;
-        if(h<=0||i<0||i>=n)continue;
-        inRange+=h;
-        if(row){
-          row.hours[i]+=h;
-          var it=null;
-          for(var k=0;k<row.items[i].length;k++)if(row.items[i][k].proj===p){it=row.items[i][k];break;}
-          if(it){it.h+=h;it.phases.push(ph.name);}
-          else row.items[i].push({proj:p,h:h,phases:[ph.name]});
-        }
+        if(h>0)put(m,h,ph.name);
       }
     });
-    return {proj:p,type:t,extras:xs,pm:row?row.pm:null,total:total,inRange:inRange};
+    // 2. Kurzfristiger Start: Arbeit vor dem Projektstart wird auf die Monate bis zum Event verteilt
+    var lead=p.lead;
+    if(lead>0){
+      var moved=0;
+      Object.keys(dist).forEach(function(k){if(+k<-lead){moved+=dist[k].h;delete dist[k];}});
+      if(moved)for(var m=-lead;m<=-1;m++)put(m,moved/lead,'Aufholen (kurzfristig)');
+    }
+    // 3. Auf die PM aufteilen
+    var members=p.team.filter(function(m){return rows[m.pm];});
+    var tsum=0;
+    members.forEach(function(m){if(m.role==='thema')tsum+=Math.max(0,m.val);});
+    var scale=tsum>100?100/tsum:1;
+    var parts=[];
+    if(rows[p.pm])parts.push({row:rows[p.pm],share:Math.max(0,1-tsum/100),role:'Haupt'});
+    members.forEach(function(m){if(m.role==='thema')parts.push({row:rows[m.pm],share:Math.max(0,m.val)/100*scale,role:ROLES.thema.short});});
+    var inRange=0;
+    Object.keys(dist).forEach(function(k){
+      var i=ev+(+k)-start;
+      if(i<0||i>=n)return;
+      inRange+=dist[k].h;
+      parts.forEach(function(pt){add(pt.row,i,p,dist[k].h*pt.share,dist[k].phases,pt.role);});
+    });
+    members.forEach(function(m){
+      if(m.role!=='ort')return;
+      var h=Math.max(0,m.val),i=ev-start;
+      total+=h;
+      if(i>=0&&i<n){inRange+=h;add(rows[m.pm],i,p,h,['Durchführung'],ROLES.ort.short);}
+    });
+    return {proj:p,type:t,extras:xs,main:rows[p.pm]?rows[p.pm].pm:null,members:members,total:total,inRange:inRange,over:tsum>100,ev:ev};
   });
   var team={cap:0,hours:[],items:[]};
   for(var i=0;i<n;i++){team.hours.push(0);team.items.push([]);}
@@ -321,7 +403,7 @@ function compute(){
     team.cap+=r.cap;
     for(var i=0;i<n;i++){
       team.hours[i]+=r.hours[i];
-      r.items[i].forEach(function(it){team.items[i].push({proj:it.proj,h:it.h,phases:it.phases,pm:r.pm});});
+      r.items[i].forEach(function(it){team.items[i].push({proj:it.proj,h:it.h,phases:it.phases,roles:it.roles,pm:r.pm});});
     }
   });
   var months=[];
@@ -373,50 +455,77 @@ function renderSettings(){
 }
 function renderPMs(){
   $('pmsBody').innerHTML=state.pms.map(function(p){
-    return '<tr><td><input type="text" maxlength="12" aria-label="Kürzel" data-k="pm" data-id="'+esc(p.id)+'" data-f="code" value="'+esc(p.code)+'"></td>'+
-      '<td><input type="number" min="0" aria-label="Kapazität in Stunden pro Monat" data-k="pm" data-id="'+esc(p.id)+'" data-f="cap" value="'+esc(p.cap)+'"></td>'+
-      '<td><input type="number" min="0" aria-label="Meetings in Stunden pro Monat" data-k="pm" data-id="'+esc(p.id)+'" data-f="meet" value="'+esc(p.meet)+'"></td>'+
+    var a='data-k="pm" data-id="'+esc(p.id)+'"';
+    return '<tr><td><input type="text" maxlength="12" aria-label="Kürzel" '+a+' data-f="code" value="'+esc(p.code)+'"></td>'+
+      '<td><input type="number" min="0" aria-label="Kapazität in Stunden pro Monat" '+a+' data-f="cap" value="'+esc(p.cap)+'"></td>'+
+      '<td><input type="number" min="0" aria-label="Meetings in Stunden pro Monat" '+a+' data-f="meet" value="'+esc(p.meet)+'"></td>'+
       '<td class="c"><button type="button" class="del" data-act="delPM" data-id="'+esc(p.id)+'" aria-label="Projektmanager löschen">Löschen</button></td></tr>';
   }).join('')||'<tr><td colspan="4" class="empty">Noch keine Projektmanager angelegt.</td></tr>';
 }
 function renderProjects(){
-  $('projBody').innerHTML=state.projects.map(function(p){
+  var s=state.settings;
+  $('projList').innerHTML=state.projects.map(function(p){
     var a='data-k="proj" data-id="'+esc(p.id)+'"';
-    return '<tr><td class="w"><input type="text" maxlength="120" aria-label="Projektname" '+a+' data-f="name" value="'+esc(p.name)+'"></td>'+
-      '<td><select aria-label="PM" '+a+' data-f="pm">'+opts(state.pms,p.pm,'code','– offen –')+'</select></td>'+
-      '<td class="w"><select aria-label="Projekttyp" '+a+' data-f="type">'+opts(state.settings.types,p.type,'name','– offen –')+'</select></td>'+
-      '<td><select aria-label="Kundenklasse" '+a+' data-f="cls">'+['A','B','C'].map(function(c){return '<option'+(c===p.cls?' selected':'')+'>'+c+'</option>';}).join('')+'</select></td>'+
-      '<td><div class="flags">'+(state.settings.extras.map(function(x){
-        return '<label><input type="checkbox" data-k="flag" data-id="'+esc(p.id)+'" data-x="'+esc(x.id)+'"'+(p.flags.indexOf(x.id)>=0?' checked':'')+'><span>'+esc(x.name||'(ohne Bezeichnung)')+'</span></label>';
-      }).join('')||'–')+'</div></td>'+
-      '<td class="d"><div class="pair"><select aria-label="Eventmonat" '+a+' data-f="month">'+monthOpts(p.month)+'</select>'+
-      '<input type="number" min="2000" max="2100" aria-label="Eventjahr" '+a+' data-f="year" value="'+esc(p.year)+'"></div></td>'+
-      '<td class="c"><button type="button" class="del" data-act="delProj" data-id="'+esc(p.id)+'" aria-label="Projekt löschen">Löschen</button></td></tr>';
-  }).join('')||'<tr><td colspan="7" class="empty">Noch keine Projekte angelegt.</td></tr>';
-}
-// Dropdowns der Projekttabelle aktualisieren, ohne den Fokus zu verlieren
-function refreshProjectSelects(){
-  var sels=$('projBody').querySelectorAll('select[data-f="pm"],select[data-f="type"]');
-  for(var i=0;i<sels.length;i++){
-    var el=sels[i],p=find(state.projects,el.dataset.id);
-    if(!p)continue;
-    el.innerHTML=el.dataset.f==='pm'?opts(state.pms,p.pm,'code','– offen –'):opts(state.settings.types,p.type,'name','– offen –');
-  }
+    var flags=s.extras.map(function(x){
+      return '<label><input type="checkbox" data-k="flag" data-id="'+esc(p.id)+'" data-x="'+esc(x.id)+'"'+(p.flags.indexOf(x.id)>=0?' checked':'')+'><span>'+esc(x.name||'(ohne Bezeichnung)')+'</span></label>';
+    }).join('');
+    var team=p.team.map(function(m){
+      var b='data-k="member" data-id="'+esc(p.id)+'" data-m="'+esc(m.id)+'"';
+      return '<div class="mrow"><select aria-label="Weiterer PM" '+b+' data-f="pm">'+opts(state.pms,m.pm,'code','– PM wählen –')+'</select>'+
+        '<select aria-label="Rolle" '+b+' data-f="role">'+Object.keys(ROLES).map(function(r){return '<option value="'+r+'"'+(r===m.role?' selected':'')+'>'+ROLES[r].label+'</option>';}).join('')+'</select>'+
+        '<span class="val"><input type="number" min="0" aria-label="'+ROLES[m.role].unit+'" '+b+' data-f="val" value="'+esc(m.val)+'"><span>'+ROLES[m.role].unit+'</span></span>'+
+        '<button type="button" class="del" data-act="delMember" data-id="'+esc(p.id)+'" data-m="'+esc(m.id)+'">Entfernen</button></div>';
+    }).join('');
+    return '<details class="proj" data-pid="'+esc(p.id)+'"'+(openProj[p.id]?' open':'')+'>'+
+      '<summary><span class="pn"></span><span class="pm"></span></summary>'+
+      '<div class="pbody"><div class="grid">'+
+      '<label class="wide"><span>Projektname</span><input type="text" maxlength="120" '+a+' data-f="name" value="'+esc(p.name)+'"></label>'+
+      '<label><span>Eventdatum</span><div class="pair"><select aria-label="Eventmonat" '+a+' data-f="month">'+monthOpts(p.month)+'</select>'+
+      '<input type="number" min="2000" max="2100" aria-label="Eventjahr" '+a+' data-f="year" value="'+esc(p.year)+'"></div></label>'+
+      '<label><span>Projekttyp</span><select '+a+' data-f="type">'+opts(s.types,p.type,'name','– offen –')+'</select></label>'+
+      '<label><span>Kunde</span><select '+a+' data-f="cls">'+['A','B','C'].map(function(c){return '<option value="'+c+'"'+(c===p.cls?' selected':'')+'>'+c+' – '+CLS[c]+' (×'+fmtAuto(s.factors[c])+')</option>';}).join('')+'</select></label>'+
+      '<label><span>Projektstart</span><select '+a+' data-f="lead">'+LEADS.map(function(l){return '<option value="'+l[0]+'"'+(l[0]===p.lead?' selected':'')+'>'+l[1]+'</option>';}).join('')+'</select></label>'+
+      '<label><span>Hauptansprechpartner</span><select '+a+' data-f="pm">'+opts(state.pms,p.pm,'code','– offen –')+'</select></label>'+
+      '</div>'+
+      (flags?'<div class="flags">'+flags+'</div>':'')+
+      (team?'<div class="team"><div class="tl">Weitere PM</div>'+team+'</div>':'')+
+      '<div class="pact"><button type="button" class="sec" data-act="addMember" data-id="'+esc(p.id)+'">+ Weiterer PM</button>'+
+      '<button type="button" class="del" data-act="delProj" data-id="'+esc(p.id)+'">Projekt löschen</button></div>'+
+      '</div></details>';
+  }).join('')||'<div class="empty">Noch keine Projekte angelegt.</div>';
 }
 
 /* ---------- Ausgabe-Rendering ---------- */
+function teamText(x,long){
+  var t=x.main?esc(x.main.code||'?'):'ohne PM';
+  if(!long)return t+(x.members.length?' +'+x.members.length:'');
+  return t+x.members.map(function(m){
+    var pm=find(state.pms,m.pm);
+    return ', '+esc(pm.code||'?')+' ('+ROLES[m.role].short+' '+fmtAuto(Math.max(0,m.val))+(m.role==='thema'?' %':' h')+')';
+  }).join('');
+}
 function renderOutput(){
   var c=compute(),s=state.settings;
 
+  // Zusammenfassungszeilen der Projekte
+  var kids=$('projList').children;
+  c.projs.forEach(function(x,i){
+    var d=kids[i];
+    if(!d||!d.querySelector)return;
+    d.querySelector('.pn').textContent=x.proj.name||'Neues Projekt';
+    d.querySelector('.pm').innerHTML=mLabel(x.ev)+' · '+teamText(x,false)+' · '+fmt(x.total)+' h';
+  });
+
   // Phasensumme
   var sum=s.phases.reduce(function(a,p){return a+p.pct;},0);
-  $('phaseMsg').innerHTML=Math.abs(sum-100)>0.001
-    ?'<div class="warn" role="alert">Warnung: Die Phasenanteile ergeben '+fmt(sum,sum%1?1:0)+' % statt 100 %.</div>'
+  var sumBad=Math.abs(sum-100)>0.001;
+  $('phaseMsg').innerHTML=sumBad
+    ?'<div class="warn" role="alert">Warnung: Die Phasenanteile ergeben '+fmtAuto(sum)+' % statt 100 %.</div>'
     :'<div class="ok">Summe der Phasenanteile: 100 %</div>';
 
   // Heatmap
   if(!c.rows.length){
-    $('heat').innerHTML='<div class="empty">Bitte zuerst Projektmanager anlegen.</div>';
+    $('heat').innerHTML='<div class="empty">Bitte zuerst unter <a href="#einstellungen">Einstellungen</a> das Team anlegen.</div>';
   }else{
     var h='<table class="heat"><thead><tr><th class="pm">PM</th>'+c.months.map(function(m){return '<th>'+mLabel(m)+'</th>';}).join('')+'</tr></thead><tbody>';
     var cell=function(key,i,hours,cap,label){
@@ -445,9 +554,9 @@ function renderOutput(){
     var html='<h3>'+title+'</h3><p class="sub">'+fmt(row.hours[i],1)+' h von '+fmt(row.cap,1)+' h verplanbarer Kapazität = '+pctText(pctOf(row.hours[i],row.cap))+'</p>';
     if(!items.length)html+='<div class="empty">Keine Projekte in diesem Monat.</div>';
     else{
-      html+='<div class="scroll"><table><thead><tr><th>Projekt</th>'+(isTeam?'<th>PM</th>':'')+'<th>Phase</th><th class="num">Stunden</th></tr></thead><tbody>'+
+      html+='<div class="scroll"><table><thead><tr><th>Projekt</th>'+(isTeam?'<th>PM</th>':'')+'<th>Rolle</th><th>Phase</th><th class="num">Stunden</th></tr></thead><tbody>'+
         items.map(function(it){
-          return '<tr><td>'+esc(it.proj.name||'(ohne Namen)')+'</td>'+(isTeam?'<td>'+esc(it.pm.code)+'</td>':'')+'<td>'+esc(it.phases.join(', '))+'</td><td class="num">'+fmt(it.h,1)+' h</td></tr>';
+          return '<tr><td>'+esc(it.proj.name||'(ohne Namen)')+'</td>'+(isTeam?'<td>'+esc(it.pm.code)+'</td>':'')+'<td>'+(esc(it.roles.join(', '))||'–')+'</td><td>'+(esc(it.phases.join(', '))||'–')+'</td><td class="num">'+fmt(it.h,1)+' h</td></tr>';
         }).join('')+'</tbody></table></div>';
     }
     d.innerHTML=html;d.hidden=false;
@@ -460,8 +569,10 @@ function renderOutput(){
     $('overview').innerHTML='<table><thead><tr><th>Projekt</th><th>PM</th><th>Klasse</th><th>Typ</th><th>Besonderheiten</th><th>Event</th><th class="num">Gesamtaufwand</th><th class="num">davon im Zeitraum</th></tr></thead><tbody>'+
       c.projs.map(function(x){
         var p=x.proj;tot+=x.total;totIn+=x.inRange;
-        return '<tr><td>'+esc(p.name||'(ohne Namen)')+'</td><td>'+(x.pm?esc(x.pm.code):'–')+'</td><td>'+esc(p.cls)+'</td><td>'+(x.type?esc(x.type.name):'–')+'</td><td>'+(x.extras.map(function(e){return esc(e.name);}).join(', ')||'–')+'</td>'+
-          '<td>'+mLabel(Math.round(p.year)*12+clamp(Math.round(p.month),1,12)-1)+'</td><td class="num">'+fmt(x.total)+' h</td><td class="num">'+fmt(x.inRange)+' h</td></tr>';
+        var bes=x.extras.map(function(e){return esc(e.name);});
+        if(p.lead>0)bes.unshift('Kurzfristig ('+p.lead+' Mon.)');
+        return '<tr><td>'+esc(p.name||'(ohne Namen)')+'</td><td>'+teamText(x,true)+'</td><td>'+esc(p.cls)+'</td><td>'+(x.type?esc(x.type.name):'–')+'</td><td>'+(bes.join(', ')||'–')+'</td>'+
+          '<td>'+mLabel(x.ev)+'</td><td class="num">'+fmt(x.total)+' h</td><td class="num">'+fmt(x.inRange)+' h</td></tr>';
       }).join('')+
       '<tr><th colspan="6">Summe</th><th class="num">'+fmt(tot)+' h</th><th class="num">'+fmt(totIn)+' h</th></tr></tbody></table>';
   }
@@ -475,11 +586,12 @@ function renderOutput(){
     }
   });
   var over=li.length;
-  if(Math.abs(sum-100)>0.001)li.push('<li>Die Phasenanteile ergeben '+fmt(sum,sum%1?1:0)+' % statt 100 % (siehe Einstellungen).</li>');
+  if(sumBad)li.push('<li>Die Phasenanteile ergeben '+fmtAuto(sum)+' % statt 100 % (siehe Einstellungen).</li>');
   c.projs.forEach(function(x){
     var nm=esc(x.proj.name||'(ohne Namen)');
-    if(!x.pm)li.push('<li>Projekt „'+nm+'“ ist keinem PM zugewiesen und fehlt in der Heatmap.</li>');
+    if(!x.main)li.push('<li>Projekt „'+nm+'“ hat keinen Hauptansprechpartner; dessen Stunden fehlen in der Auslastung.</li>');
     if(!x.type)li.push('<li>Projekt „'+nm+'“ hat keinen Projekttyp.</li>');
+    if(x.over)li.push('<li>Projekt „'+nm+'“: Die Themen-Anteile der weiteren PM liegen über 100 % und wurden auf 100 % gekürzt.</li>');
   });
   $('hints').innerHTML=(over?'':'<div class="ok" style="margin:0 0 6px">Kein PM liegt in einem Monat über 100 %.</div>')+(li.length?'<ul class="hints">'+li.join('')+'</ul>':'');
 }
@@ -488,20 +600,31 @@ function renderAll(){renderSettings();renderPMs();renderProjects();renderOutput(
 /* ---------- Ereignisse ---------- */
 function find(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i];return null;}
 function remove(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id){list.splice(i,1);return;}}
-var NUMF={startMonth:1,startYear:1,months:1,buffer:1,hours:1,from:1,to:1,pct:1,cap:1,meet:1,month:1,year:1};
+var NUMF={startMonth:1,startYear:1,months:1,buffer:1,hours:1,from:1,to:1,pct:1,cap:1,meet:1,month:1,year:1,lead:1,val:1};
 
 function onEdit(el){
   var k=el.dataset.k,f=el.dataset.f;
   if(!k)return;
+  var pj;
   if(k==='flag'){
-    var pj=find(state.projects,el.dataset.id);
+    pj=find(state.projects,el.dataset.id);
     if(!pj)return;
     var at=pj.flags.indexOf(el.dataset.x);
     if(el.checked&&at<0)pj.flags.push(el.dataset.x);
     if(!el.checked&&at>=0)pj.flags.splice(at,1);
     renderOutput();return;
   }
-  var v=el.type==='checkbox'?el.checked:(NUMF[f]||k==='fac'?num(el.value):el.value);
+  var v=NUMF[f]||k==='fac'?num(el.value):el.value;
+  if(k==='member'){
+    pj=find(state.projects,el.dataset.id);
+    var mb=pj&&find(pj.team,el.dataset.m);
+    if(!mb)return;
+    if(f==='role'){
+      if(!ROLES[v]||v===mb.role)return;
+      mb.role=v;mb.val=ROLES[v].def;renderProjects();
+    }else mb[f]=v;
+    renderOutput();return;
+  }
   var s=state.settings,o=null;
   if(k==='set')o=s;
   else if(k==='fac')o=s.factors;
@@ -512,9 +635,8 @@ function onEdit(el){
   else if(k==='proj')o=find(state.projects,el.dataset.id);
   if(!o)return;
   o[f]=v;
-  if((k==='type'&&f==='name')||(k==='pm'&&f==='code'))refreshProjectSelects();
-  if(k==='extra'&&f==='name')renderProjects();
-  if(k!=='proj')saveConfig();
+  // Einstellungen liegen außerhalb der Projektliste: Liste neu aufbauen, damit Auswahllisten aktuell sind
+  if(k!=='proj'){saveConfig();if(!(k==='set'&&f!=='buffer'))renderProjects();}
   renderOutput();
 }
 document.addEventListener('input',function(e){onEdit(e.target);});
@@ -522,6 +644,10 @@ document.addEventListener('change',function(e){
   if(e.target.id==='importFile'){importFile(e.target);return;}
   onEdit(e.target);
 });
+document.addEventListener('toggle',function(e){
+  var t=e.target;
+  if(t.classList&&t.classList.contains('proj')){if(t.open)openProj[t.dataset.pid]=true;else delete openProj[t.dataset.pid];}
+},true);
 
 document.addEventListener('click',function(e){
   var cellBtn=e.target.closest('[data-cell]');
@@ -535,8 +661,8 @@ document.addEventListener('click',function(e){
   }
   var b=e.target.closest('[data-act]');
   if(!b)return;
-  var act=b.dataset.act,id=b.dataset.id,s=state.settings;
-  if(act==='addType'){s.types.push({id:uid(),name:'Neuer Projekttyp',hours:200});renderSettings();refreshProjectSelects();focusLast('typesBody');}
+  var act=b.dataset.act,id=b.dataset.id,s=state.settings,pj;
+  if(act==='addType'){s.types.push({id:uid(),name:'Neuer Projekttyp',hours:200});renderSettings();renderProjects();focusLast('typesBody');}
   else if(act==='delType'){
     remove(s.types,id);state.projects.forEach(function(p){if(p.type===id)p.type='';});
     renderSettings();renderProjects();
@@ -549,36 +675,58 @@ document.addEventListener('click',function(e){
     state.projects.forEach(function(p){var i=p.flags.indexOf(id);if(i>=0)p.flags.splice(i,1);});
     renderSettings();renderProjects();
   }
-  else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:140,meet:0});renderPMs();refreshProjectSelects();focusLast('pmsBody');}
+  else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:140,meet:0});renderPMs();renderProjects();focusLast('pmsBody');}
   else if(act==='delPM'){
-    remove(state.pms,id);state.projects.forEach(function(p){if(p.pm===id)p.pm='';});
+    remove(state.pms,id);
+    state.projects.forEach(function(p){
+      if(p.pm===id)p.pm='';
+      p.team=p.team.filter(function(m){return m.pm!==id;});
+    });
     if(selected&&selected.pm===id)selected=null;
     renderPMs();renderProjects();
   }
   else if(act==='addProj'){
     var ev=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1+6;
-    state.projects.push({id:uid(),name:'',pm:state.pms[0]?state.pms[0].id:'',type:s.types[0]?s.types[0].id:'',cls:'B',flags:[],month:ev%12+1,year:Math.floor(ev/12)});
-    renderProjects();focusLast('projBody');
+    pj={id:uid(),name:'',pm:state.pms[0]?state.pms[0].id:'',type:s.types[0]?s.types[0].id:'',cls:'B',flags:[],lead:0,team:[],month:ev%12+1,year:Math.floor(ev/12)};
+    state.projects.push(pj);openProj[pj.id]=true;
+    renderProjects();
+    var last=$('projList').lastElementChild,inp=last&&last.querySelector('input');
+    if(inp)inp.focus();
   }
-  else if(act==='delProj'){remove(state.projects,id);renderProjects();}
+  else if(act==='delProj'){
+    pj=find(state.projects,id);
+    if(pj&&pj.name&&!confirm('Projekt „'+pj.name+'“ löschen?'))return;
+    remove(state.projects,id);delete openProj[id];renderProjects();
+  }
+  else if(act==='addMember'){
+    pj=find(state.projects,id);
+    if(!pj||pj.team.length>=10)return;
+    pj.team.push({id:uid(),pm:'',role:'thema',val:ROLES.thema.def});
+    renderProjects();
+  }
+  else if(act==='delMember'){
+    pj=find(state.projects,id);
+    if(!pj)return;
+    remove(pj.team,b.dataset.m);renderProjects();
+  }
   else if(act==='example'){
-    if((state.pms.length||state.projects.length)&&!confirm('Projektmanager und Projekte durch Beispieldaten ersetzen? Die übrigen Einstellungen bleiben erhalten.'))return;
+    if((state.pms.length||state.projects.length)&&!confirm('Team und Projekte durch Beispieldaten ersetzen? Die übrigen Einstellungen bleiben erhalten.'))return;
     loadExample();saveConfig();return;
   }
   else if(act==='clear'){
-    if(!confirm('Wirklich alle Projekte löschen? Einstellungen und Projektmanager bleiben erhalten.'))return;
-    state.projects=[];selected=null;renderAll();return;
+    if(!confirm('Wirklich alle Projekte löschen? Einstellungen und Team bleiben erhalten.'))return;
+    state.projects=[];openProj={};selected=null;renderAll();return;
   }
   else if(act==='resetSettings'){
-    if(!confirm('Einstellungen, Projekttypen, Phasen und Projektmanager auf die Standardwerte zurücksetzen? Projekte verlieren dabei PM und Projekttyp.'))return;
+    if(!confirm('Alle Einstellungen und das Team auf die Standardwerte zurücksetzen? Projekte verlieren dabei PM und Projekttyp.'))return;
     var keep=state.projects;
-    keep.forEach(function(p){p.pm='';p.type='';p.flags=[];});
+    keep.forEach(function(p){p.pm='';p.type='';p.flags=[];p.team=[];});
     state=defaults();state.projects=keep;selected=null;
     try{localStorage.removeItem(KEY);}catch(err){}
     renderAll();return;
   }
   else if(act==='export'){exportJSON();return;}
-  if(act!=='addProj'&&act!=='delProj')saveConfig();
+  if(['addProj','delProj','addMember','delMember'].indexOf(act)<0)saveConfig();
   renderOutput();
 });
 function focusLast(bodyId){
@@ -588,26 +736,28 @@ function focusLast(bodyId){
 
 /* ---------- Beispieldaten ---------- */
 function loadExample(){
-  selected=null;state.pms=[];state.projects=[];
+  selected=null;openProj={};state.pms=[];state.projects=[];
   var s=state.settings,t=s.types,start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
   var pm=function(code,cap,meet){var p={id:uid(),code:code,cap:cap,meet:meet};state.pms.push(p);return p.id;};
   var ab=pm('AB',140,10),ck=pm('CK',140,10),ms=pm('MS',100,6);
-  var pr=function(name,pmId,ti,c,xi,off){
-    var ev=start+off,type=t[ti]||t[0],x=s.extras[xi];
-    state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cls:c,flags:x?[x.id]:[],month:ev%12+1,year:Math.floor(ev/12)});
+  var pr=function(name,pmId,ti,c,off,o){
+    o=o||{};
+    var ev=start+off,type=t[ti]||t[0],x=o.flag?s.extras[0]:null;
+    state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cls:c,flags:x?[x.id]:[],lead:o.lead||0,
+      team:(o.team||[]).map(function(m){return {id:uid(),pm:m[0],role:m[1],val:m[2]};}),month:ev%12+1,year:Math.floor(ev/12)});
   };
-  pr('Jahreskongress Kardiologie',ab,3,'A',1,6);
-  pr('Mitgliederversammlung Verband',ab,1,'B',-1,4);
-  pr('Fachkongress Radiologie',ck,2,'B',0,5);
-  pr('Corporate Kick-off',ck,4,'C',-1,9);
-  pr('Konzertreihe Sommer',ms,0,'A',-1,3);
-  pr('Kongress Hausärztetag',ms,2,'B',-1,8);
+  pr('Jahreskongress Kardiologie',ab,3,'A',6,{flag:true,team:[[ck,'thema',20],[ms,'ort',30]]});
+  pr('Mitgliederversammlung Verband',ab,1,'B',4);
+  pr('Fachkongress Radiologie',ck,2,'B',5,{lead:4});
+  pr('Corporate Kick-off',ck,4,'C',9,{team:[[ab,'ort',20]]});
+  pr('Konzertreihe Sommer',ms,0,'A',3);
+  pr('Kongress Hausärztetag',ms,2,'B',8,{team:[[ck,'thema',30]]});
   renderAll();
 }
 
 /* ---------- Export / Import ---------- */
 function exportJSON(){
-  var data=JSON.stringify({app:'kapaplan',version:1,settings:state.settings,pms:state.pms,projects:state.projects},null,2);
+  var data=JSON.stringify({app:'kapaplan',version:2,settings:state.settings,pms:state.pms,projects:state.projects},null,2);
   var url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
   var a=document.createElement('a');
   a.href=url;a.download='kapaplan-'+new Date().toISOString().slice(0,10)+'.json';
@@ -620,6 +770,7 @@ function sanitize(d){
   var n=function(v,fb){var x=typeof v==='number'?v:parseFloat(v);return isFinite(x)?x:fb;};
   var str=function(v,max){return String(v==null?'':v).slice(0,max);};
   var arr=function(v){return Array.isArray(v)?v.filter(function(x){return x&&typeof x==='object';}).slice(0,500):[];};
+  var has=function(list,id){return list.some(function(x){return x.id===id;});};
   var f=s.factors&&typeof s.factors==='object'?s.factors:{};
   var out={settings:{
     startMonth:clamp(Math.round(n(s.startMonth,ds.startMonth)),1,12),
@@ -631,12 +782,16 @@ function sanitize(d){
     types:arr(s.types).map(function(t){return {id:str(t.id,40)||uid(),name:str(t.name,80),hours:n(t.hours,0)};}),
     phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:n(p.from,0),to:n(p.to,0),pct:n(p.pct,0)};})
   },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,140),meet:n(p.meet,0)};}),projects:[]};
-  var has=function(list,id){return list.some(function(x){return x.id===id;});};
   out.projects=arr(d.projects).map(function(p){
-    var pm=str(p.pm,40),type=str(p.type,40),c=str(p.cls,1).toUpperCase();
+    var pm=str(p.pm,40),type=str(p.type,40),c=str(p.cls,1).toUpperCase(),lead=Math.round(n(p.lead,0));
     return {id:str(p.id,40)||uid(),name:str(p.name,120),pm:has(out.pms,pm)?pm:'',type:has(out.settings.types,type)?type:'',
       cls:c==='A'||c==='B'||c==='C'?c:'B',
       flags:(Array.isArray(p.flags)?p.flags:[]).map(function(x){return str(x,40);}).filter(function(x,i,l){return has(out.settings.extras,x)&&l.indexOf(x)===i;}),
+      lead:lead>=3&&lead<=6?lead:0,
+      team:arr(p.team).slice(0,10).map(function(m){
+        var mp=str(m.pm,40),role=ROLES[m.role]?m.role:'thema';
+        return {id:str(m.id,40)||uid(),pm:has(out.pms,mp)?mp:'',role:role,val:Math.max(0,n(m.val,ROLES[role].def))};
+      }),
       month:clamp(Math.round(n(p.month,1)),1,12),year:Math.round(n(p.year,ds.startYear))};
   });
   return out;
@@ -646,7 +801,7 @@ function importFile(input){
   if(!file)return;
   var r=new FileReader();
   r.onload=function(){
-    try{state=sanitize(JSON.parse(String(r.result)));selected=null;renderAll();saveConfig();}
+    try{state=sanitize(JSON.parse(String(r.result)));selected=null;openProj={};renderAll();saveConfig();}
     catch(err){alert('Die Datei konnte nicht gelesen werden: '+err.message);}
     input.value='';
   };

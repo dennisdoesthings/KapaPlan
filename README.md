@@ -13,20 +13,30 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 
 ## Bedienung
 
-1. Seite **Einstellungen**: Planungszeitraum, Pufferquote, Faktoren der Kundenklassen, Projekttypen, Besonderheiten, Phasenverteilung sowie Projektmanager (Kürzel, Kapazität und durchschnittliche Meeting-Stunden pro Monat) pflegen. Jede Änderung wird automatisch gespeichert.
-2. Seite **Planung**: Projekte mit Projektname, PM, Projekttyp, Kundenklasse, Besonderheiten und Eventdatum eintragen.
-3. Heatmap, Projektübersicht und Hinweise werden bei jeder Änderung sofort neu berechnet. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
+1. Seite **Einstellungen** (einmalig):
+   - **Team**: Kürzel, Kapazität und durchschnittliche Meeting-Stunden pro Monat je PM, dazu der Puffer in %.
+   - **Projekttypen**: Bezeichnung und Basisstunden.
+   - **Erweiterte Einstellungen** (eingeklappt): Faktoren der Kundenklassen, Besonderheiten, Phasenverteilung.
+   - Jede Änderung wird automatisch im Browser gespeichert.
+2. Seite **Planung**:
+   - Mit **+ Projekt** ein Projekt anlegen und aufklappen: Name, Eventdatum, Projekttyp, Kunde (A/B/C), Projektstart und Hauptansprechpartner wählen.
+   - Mit **+ Weiterer PM** zusätzliche PM zuordnen und deren Rolle und Gewicht festlegen.
+   - Der Zeitraum der Auslastung wird direkt über der Heatmap eingestellt.
+3. Heatmap, Hinweise und Projektübersicht werden bei jeder Änderung sofort neu berechnet. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
 
 Zum Ausprobieren: **Beispieldaten laden**.
 
 ### Berechnung
 
 - Projektaufwand = Basisstunden × Faktor der Kundenklasse × (1 + Summe der Zuschläge der gewählten Besonderheiten)
-- Besonderheiten (z. B. „Kurzfristig“ +20 %, „Politisch / besondere Anforderungen“ +25 %) sind in den Einstellungen editierbar und je Projekt per Häkchen wählbar
-- Der Aufwand wird gemäß Phasenverteilung auf die Monate verteilt, jeder Phasenanteil gleichmäßig auf die Monate der Phase
-- Phasen können mit halben Monaten beginnen oder enden (z. B. Heiße Phase ab −1,5 = 6 Wochen vor dem Eventmonat); angeschnittene Monate werden anteilig belastet
+- Der Aufwand wird gemäß Phasenverteilung auf die Monate verteilt, jeder Phasenanteil gleichmäßig auf die Monate der Phase. Phasen können mit halben Monaten beginnen oder enden; angeschnittene Monate werden anteilig belastet.
+- **Projektstart „Kurzfristig“** (3 bis 6 Monate vor dem Event): Der Gesamtaufwand bleibt gleich. Stunden, die vor dem Projektstart lägen, werden gleichmäßig auf die Monate vom Projektstart bis zum Monat vor dem Event verteilt.
+- **Mehrere PM je Projekt**:
+  - *Hauptansprechpartner*: trägt den Projektaufwand abzüglich der Themen-Anteile.
+  - *Thema / Teilbereich*: übernimmt den eingestellten Prozentanteil des Aufwands in jedem Monat (Standard 20 %, bei mehreren Themen entsprechend erhöhen).
+  - *Nur vor Ort (Aufbau, Durchführung, Abbau)*: zusätzliche Stunden im Eventmonat (Standard 30 h), sie kommen zum Projektaufwand hinzu.
+- Regelmäßige Meetings (h/Monat je PM) werden in jedem Monat fest addiert.
 - Verplanbare Kapazität = Kapazität × (1 − Puffer)
-- Regelmäßige Meetings (h/Monat je PM) werden in jedem Monat fest zu den Projektstunden addiert
 - Auslastung % = Stunden / verplanbare Kapazität
 - Farben: Grün unter 80 %, Gelb 80–100 %, Rot über 100 %
 
