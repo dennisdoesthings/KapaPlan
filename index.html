@@ -165,6 +165,10 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
       <tbody id="typesBody"></tbody>
     </table></div>
     <p><button type="button" class="sec" data-act="addType">+ Größenklasse</button></p>
+    <div class="grid one">
+      <label><span>Allgemeiner Zuschlag auf alle Projekte in %</span><input type="number" data-k="set" data-f="overhead" id="sOverhead" min="-100"></label>
+    </div>
+    <p class="sub" style="margin-top:6px">Wird auf die Stunden jedes Projekts aufgeschlagen, zusätzlich zu den Aufwandsfaktoren. 0 = kein Zuschlag.</p>
   </section>
 
   <section>
@@ -295,7 +299,7 @@ function defaults(){
   return {
     settings:{
       startMonth:now.getMonth()+1,startYear:now.getFullYear(),months:12,buffer:20,
-      facMin:0.7,facMax:1.5,
+      facMin:0.7,facMax:1.5,overhead:0,
       extras:[
         ex('Kurzer Planungsvorlauf',20),
         ex('Umfangreiche Ausstellung',20,3),
@@ -399,7 +403,7 @@ function compute(){
     var xs=s.extras.filter(function(x){return p.flags.indexOf(x.id)>=0;});
     var raw=1+xs.reduce(function(a,x){return a+x.pct;},0)/100;
     var factor=clamp(raw,fLo,fHi);
-    var base=(t?Math.max(0,t.hours):0)*factor,total=base;
+    var base=(t?Math.max(0,t.hours):0)*factor*Math.max(0,1+s.overhead/100),total=base;
     var ev=Math.round(p.year)*12+clamp(Math.round(p.month),1,12)-1;
 
     // 1. Aufwand nach Monatsprofil der Komplexität auf Monate relativ zum Event verteilen
@@ -492,6 +496,7 @@ function renderSettings(){
   $('sMonths').value=s.months;
   $('sBuffer').value=s.buffer;
   $('sFacMin').value=s.facMin;$('sFacMax').value=s.facMax;
+  $('sOverhead').value=s.overhead;
   $('extrasBody').innerHTML=s.extras.map(function(x){
     return '<tr><td class="w"><input type="text" maxlength="60" aria-label="Bezeichnung" data-k="extra" data-id="'+esc(x.id)+'" data-f="name" value="'+esc(x.name)+'"></td>'+
       '<td><input type="number" aria-label="Zuschlag in Prozent" data-k="extra" data-id="'+esc(x.id)+'" data-f="pct" value="'+esc(x.pct)+'"></td>'+
@@ -592,7 +597,7 @@ function renderOutput(){
     d.querySelector('.mainshare').textContent=fmtAuto(x.mainShare*100)+' %';
     var sum=scoreSum(p.scores);
     d.querySelector('.scoreinfo').textContent=p.scores?'– Score '+sum+' von 20: '+scoreLabel(sum):'– optional';
-    d.querySelector('.facinfo').textContent='– Gesamtfaktor ×'+fmt(x.factor,2)+(x.capped?' (begrenzt auf '+fmt(Math.min(s.facMin,s.facMax),2)+' bis '+fmt(Math.max(s.facMin,s.facMax),2)+')':'');
+    d.querySelector('.facinfo').textContent='– Gesamtfaktor ×'+fmt(x.factor,2)+(x.capped?' (begrenzt auf '+fmt(Math.min(s.facMin,s.facMax),2)+' bis '+fmt(Math.max(s.facMin,s.facMax),2)+')':'')+(s.overhead?', allgemeiner Zuschlag '+sign(s.overhead):'');
   });
 
   // Summen der Profile
@@ -676,7 +681,7 @@ function renderAll(){renderSettings();renderPMs();renderProjects();renderOutput(
 /* ---------- Ereignisse ---------- */
 function find(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i];return null;}
 function remove(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id){list.splice(i,1);return;}}
-var NUMF={startMonth:1,startYear:1,months:1,buffer:1,facMin:1,facMax:1,hours:1,from:1,to:1,pct:1,cap:1,meet:1,month:1,year:1,lead:1,val:1};
+var NUMF={startMonth:1,startYear:1,months:1,buffer:1,facMin:1,facMax:1,overhead:1,hours:1,from:1,to:1,pct:1,cap:1,meet:1,month:1,year:1,lead:1,val:1};
 
 function onEdit(el){
   var k=el.dataset.k,f=el.dataset.f;
@@ -882,7 +887,7 @@ function sanitize(d){
     startYear:Math.round(n(s.startYear,ds.startYear)),
     months:clamp(Math.round(n(s.months,12)),1,60),
     buffer:n(s.buffer,20),
-    facMin:Math.max(0,n(s.facMin,0.7)),facMax:Math.max(0,n(s.facMax,1.5)),
+    facMin:Math.max(0,n(s.facMin,0.7)),facMax:Math.max(0,n(s.facMax,1.5)),overhead:n(s.overhead,0),
     extras:Array.isArray(s.extras)?arr(s.extras).map(function(x){
       var o={id:str(x.id,40)||uid(),name:str(x.name,60),pct:n(x.pct,0)},c=x.crit;
       // Ältere Einstellungen kennen die Verknüpfung noch nicht: über die Standardbezeichnung zuordnen

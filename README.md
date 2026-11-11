@@ -15,7 +15,7 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 
 1. Seite **Einstellungen** (einmalig):
    - **Team**: Kürzel, Kapazität sowie Meetings & Grundlast pro Monat je PM, dazu der Puffer in %.
-   - **Größenklassen**: S, M, L, XL mit Basisstunden.
+   - **Größenklassen**: S, M, L, XL mit Basisstunden, dazu ein allgemeiner Zuschlag in % auf alle Projekte (Standard 0).
    - **Erweiterte Einstellungen** (eingeklappt): Aufwandsfaktoren, Grenzen des Gesamtfaktors und Monatsprofil je Komplexität.
    - Jede Änderung wird automatisch im Browser gespeichert.
 2. Seite **Planung**:
@@ -30,7 +30,7 @@ Zum Ausprobieren: **Beispieldaten laden**.
 
 ### Berechnung
 
-- **Gesamtstunden** = Basisstunden der Größenklasse × Gesamtfaktor
+- **Gesamtstunden** = Basisstunden der Größenklasse × Gesamtfaktor × (1 + allgemeiner Zuschlag)
 - **Gesamtfaktor** = 1 + Summe der gewählten Zu- und Abschläge, begrenzt auf 0,7 bis 1,5
 - **Komplexität** (einfach, mittel, komplex) bestimmt nur die Verteilung, nicht die Stunden. Score 0–5 = einfach, 6–10 = mittel, ab 11 = komplex (16–20 gilt als sehr komplex und nutzt das komplexe Profil).
 - **Monatsprofil**: Die Gesamtstunden werden je Komplexität auf die Zeiträume vor, im und nach dem Veranstaltungsmonat verteilt; der Anteil eines Zeitraums gleichmäßig auf seine Monate.
