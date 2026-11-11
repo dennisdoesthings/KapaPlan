@@ -23,6 +23,7 @@ Zum Ausprobieren: **Beispieldaten laden**.
 
 - Projektaufwand = (Basisstunden + ggf. Hybrid-Zuschlag) × Faktor der Kundenklasse
 - Der Aufwand wird gemäß Phasenverteilung auf die Monate verteilt, jeder Phasenanteil gleichmäßig auf die Monate der Phase
+- Phasen können mit halben Monaten beginnen oder enden (z. B. Heiße Phase ab −1,5 = 6 Wochen vor dem Eventmonat); angeschnittene Monate werden anteilig belastet
 - Verplanbare Kapazität = Kapazität × (1 − Puffer)
 - Auslastung % = Stunden / verplanbare Kapazität
 - Farben: Grün unter 80 %, Gelb 80–100 %, Rot über 100 %

@@ -129,6 +129,7 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
       <thead><tr><th>Phase</th><th>von Monat</th><th>bis Monat</th><th>Anteil %</th><th></th></tr></thead>
       <tbody id="phasesBody"></tbody>
     </table></div>
+    <p class="sub" style="margin-top:8px">Halbe Monate sind möglich: „von −1,5“ bedeutet ab 6 Wochen vor dem Eventmonat. Angeschnittene Monate werden anteilig belastet.</p>
     <p><button type="button" class="sec" data-act="addPhase">+ Phase</button></p>
     <div id="phaseMsg"></div>
   </section>
@@ -218,8 +219,8 @@ function defaults(){
       ],
       phases:[
         {id:uid(),name:'Konzeption',from:-12,to:-7,pct:20},
-        {id:uid(),name:'Planung',from:-6,to:-3,pct:35},
-        {id:uid(),name:'Heiße Phase',from:-2,to:-1,pct:30},
+        {id:uid(),name:'Planung',from:-6,to:-2.5,pct:35},
+        {id:uid(),name:'Heiße Phase (ab 6 Wochen vorher)',from:-1.5,to:-1,pct:30},
         {id:uid(),name:'Durchführung',from:0,to:0,pct:10},
         {id:uid(),name:'Nachbereitung',from:1,to:1,pct:5}
       ]
@@ -276,12 +277,14 @@ function compute(){
     var ev=Math.round(p.year)*12+clamp(Math.round(p.month),1,12)-1;
     var inRange=0,row=rows[p.pm];
     s.phases.forEach(function(ph){
-      var a=clamp(Math.round(Math.min(ph.from,ph.to)),-120,120),b=clamp(Math.round(Math.max(ph.from,ph.to)),-120,120);
-      var h=total*ph.pct/100/(b-a+1);
-      if(!h)return;
-      for(var m=a;m<=b;m++){
+      // Monat m belegt das Intervall [m, m+1); angeschnittene Monate zählen anteilig
+      var a=clamp(Math.min(ph.from,ph.to),-120,120),b=clamp(Math.max(ph.from,ph.to),-120,120)+1;
+      var all=total*ph.pct/100;
+      if(!all)return;
+      for(var m=Math.floor(a);m<b;m++){
+        var h=all*(Math.min(b,m+1)-Math.max(a,m))/(b-a);
         var i=ev+m-start;
-        if(i<0||i>=n)continue;
+        if(h<=0||i<0||i>=n)continue;
         inRange+=h;
         if(row){
           row.hours[i]+=h;
@@ -340,8 +343,8 @@ function renderSettings(){
   $('phasesBody').innerHTML=s.phases.map(function(p){
     var a='data-k="phase" data-id="'+esc(p.id)+'"';
     return '<tr><td class="w"><input type="text" maxlength="80" aria-label="Phase" '+a+' data-f="name" value="'+esc(p.name)+'"></td>'+
-      '<td><input type="number" step="1" aria-label="von Monat" '+a+' data-f="from" value="'+esc(p.from)+'"></td>'+
-      '<td><input type="number" step="1" aria-label="bis Monat" '+a+' data-f="to" value="'+esc(p.to)+'"></td>'+
+      '<td><input type="number" step="0.5" aria-label="von Monat" '+a+' data-f="from" value="'+esc(p.from)+'"></td>'+
+      '<td><input type="number" step="0.5" aria-label="bis Monat" '+a+' data-f="to" value="'+esc(p.to)+'"></td>'+
       '<td><input type="number" min="0" max="100" aria-label="Anteil in Prozent" '+a+' data-f="pct" value="'+esc(p.pct)+'"></td>'+
       '<td class="c"><button type="button" class="del" data-act="delPhase" data-id="'+esc(p.id)+'" aria-label="Phase löschen">Löschen</button></td></tr>';
   }).join('')||'<tr><td colspan="5" class="empty">Keine Phasen angelegt.</td></tr>';
@@ -585,7 +588,7 @@ function sanitize(d){
     factors:{A:n(f.A,1.5),B:n(f.B,1),C:n(f.C,0.6)},
     hybrid:n(s.hybrid,100),
     types:arr(s.types).map(function(t){return {id:str(t.id,40)||uid(),name:str(t.name,80),hours:n(t.hours,0)};}),
-    phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:Math.round(n(p.from,0)),to:Math.round(n(p.to,0)),pct:n(p.pct,0)};})
+    phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:n(p.from,0),to:n(p.to,0),pct:n(p.pct,0)};})
   },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,140)};}),projects:[]};
   var has=function(list,id){return list.some(function(x){return x.id===id;});};
   out.projects=arr(d.projects).map(function(p){
