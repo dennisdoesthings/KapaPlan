@@ -145,9 +145,9 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 
   <section>
     <h2>Projektmanager</h2>
-    <p class="sub">Bitte nur Kürzel verwenden, keine Klarnamen.</p>
+    <p class="sub">Bitte nur Kürzel verwenden, keine Klarnamen. „Meetings“ = durchschnittliche Stunden pro Monat für Jours fixes und regelmäßige Termine (wöchentlich 2 h ≈ 9 h/Monat). Sie werden jeden Monat fest eingeplant.</p>
     <div class="scroll"><table class="edit">
-      <thead><tr><th>Kürzel</th><th>Kapazität (h/Monat)</th><th></th></tr></thead>
+      <thead><tr><th>Kürzel</th><th>Kapazität (h/Monat)</th><th>Meetings (h/Monat)</th><th></th></tr></thead>
       <tbody id="pmsBody"></tbody>
     </table></div>
     <p><button type="button" class="sec" data-act="addPM">+ Projektmanager</button></p>
@@ -279,7 +279,11 @@ function compute(){
   var rows={},order=[];
   state.pms.forEach(function(p){
     var r={pm:p,cap:Math.max(0,p.cap)*(1-buf),hours:[],items:[]};
-    for(var i=0;i<n;i++){r.hours.push(0);r.items.push([]);}
+    var meet=Math.max(0,p.meet||0);
+    for(var i=0;i<n;i++){
+      r.hours.push(meet);
+      r.items.push(meet?[{proj:{name:'Regelmäßige Meetings'},h:meet,phases:['–']}]:[]);
+    }
     rows[p.id]=r;order.push(r);
   });
   var typeById={};s.types.forEach(function(t){typeById[t.id]=t;});
@@ -371,8 +375,9 @@ function renderPMs(){
   $('pmsBody').innerHTML=state.pms.map(function(p){
     return '<tr><td><input type="text" maxlength="12" aria-label="Kürzel" data-k="pm" data-id="'+esc(p.id)+'" data-f="code" value="'+esc(p.code)+'"></td>'+
       '<td><input type="number" min="0" aria-label="Kapazität in Stunden pro Monat" data-k="pm" data-id="'+esc(p.id)+'" data-f="cap" value="'+esc(p.cap)+'"></td>'+
+      '<td><input type="number" min="0" aria-label="Meetings in Stunden pro Monat" data-k="pm" data-id="'+esc(p.id)+'" data-f="meet" value="'+esc(p.meet)+'"></td>'+
       '<td class="c"><button type="button" class="del" data-act="delPM" data-id="'+esc(p.id)+'" aria-label="Projektmanager löschen">Löschen</button></td></tr>';
-  }).join('')||'<tr><td colspan="3" class="empty">Noch keine Projektmanager angelegt.</td></tr>';
+  }).join('')||'<tr><td colspan="4" class="empty">Noch keine Projektmanager angelegt.</td></tr>';
 }
 function renderProjects(){
   $('projBody').innerHTML=state.projects.map(function(p){
@@ -483,7 +488,7 @@ function renderAll(){renderSettings();renderPMs();renderProjects();renderOutput(
 /* ---------- Ereignisse ---------- */
 function find(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i];return null;}
 function remove(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id){list.splice(i,1);return;}}
-var NUMF={startMonth:1,startYear:1,months:1,buffer:1,hours:1,from:1,to:1,pct:1,cap:1,month:1,year:1};
+var NUMF={startMonth:1,startYear:1,months:1,buffer:1,hours:1,from:1,to:1,pct:1,cap:1,meet:1,month:1,year:1};
 
 function onEdit(el){
   var k=el.dataset.k,f=el.dataset.f;
@@ -544,7 +549,7 @@ document.addEventListener('click',function(e){
     state.projects.forEach(function(p){var i=p.flags.indexOf(id);if(i>=0)p.flags.splice(i,1);});
     renderSettings();renderProjects();
   }
-  else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:140});renderPMs();refreshProjectSelects();focusLast('pmsBody');}
+  else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:140,meet:0});renderPMs();refreshProjectSelects();focusLast('pmsBody');}
   else if(act==='delPM'){
     remove(state.pms,id);state.projects.forEach(function(p){if(p.pm===id)p.pm='';});
     if(selected&&selected.pm===id)selected=null;
@@ -585,8 +590,8 @@ function focusLast(bodyId){
 function loadExample(){
   selected=null;state.pms=[];state.projects=[];
   var s=state.settings,t=s.types,start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
-  var pm=function(code,cap){var p={id:uid(),code:code,cap:cap};state.pms.push(p);return p.id;};
-  var ab=pm('AB',140),ck=pm('CK',140),ms=pm('MS',100);
+  var pm=function(code,cap,meet){var p={id:uid(),code:code,cap:cap,meet:meet};state.pms.push(p);return p.id;};
+  var ab=pm('AB',140,10),ck=pm('CK',140,10),ms=pm('MS',100,6);
   var pr=function(name,pmId,ti,c,xi,off){
     var ev=start+off,type=t[ti]||t[0],x=s.extras[xi];
     state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cls:c,flags:x?[x.id]:[],month:ev%12+1,year:Math.floor(ev/12)});
@@ -625,7 +630,7 @@ function sanitize(d){
     extras:Array.isArray(s.extras)?arr(s.extras).map(function(x){return {id:str(x.id,40)||uid(),name:str(x.name,60),pct:n(x.pct,0)};}):ds.extras,
     types:arr(s.types).map(function(t){return {id:str(t.id,40)||uid(),name:str(t.name,80),hours:n(t.hours,0)};}),
     phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:n(p.from,0),to:n(p.to,0),pct:n(p.pct,0)};})
-  },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,140)};}),projects:[]};
+  },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,140),meet:n(p.meet,0)};}),projects:[]};
   var has=function(list,id){return list.some(function(x){return x.id===id;});};
   out.projects=arr(d.projects).map(function(p){
     var pm=str(p.pm,40),type=str(p.type,40),c=str(p.cls,1).toUpperCase();

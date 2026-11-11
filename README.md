@@ -13,7 +13,7 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 
 ## Bedienung
 
-1. Seite **Einstellungen**: Planungszeitraum, Pufferquote, Faktoren der Kundenklassen, Projekttypen, Besonderheiten, Phasenverteilung sowie Projektmanager (Kürzel und Kapazität in Stunden pro Monat) pflegen. Jede Änderung wird automatisch gespeichert.
+1. Seite **Einstellungen**: Planungszeitraum, Pufferquote, Faktoren der Kundenklassen, Projekttypen, Besonderheiten, Phasenverteilung sowie Projektmanager (Kürzel, Kapazität und durchschnittliche Meeting-Stunden pro Monat) pflegen. Jede Änderung wird automatisch gespeichert.
 2. Seite **Planung**: Projekte mit Projektname, PM, Projekttyp, Kundenklasse, Besonderheiten und Eventdatum eintragen.
 3. Heatmap, Projektübersicht und Hinweise werden bei jeder Änderung sofort neu berechnet. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
 
@@ -26,6 +26,7 @@ Zum Ausprobieren: **Beispieldaten laden**.
 - Der Aufwand wird gemäß Phasenverteilung auf die Monate verteilt, jeder Phasenanteil gleichmäßig auf die Monate der Phase
 - Phasen können mit halben Monaten beginnen oder enden (z. B. Heiße Phase ab −1,5 = 6 Wochen vor dem Eventmonat); angeschnittene Monate werden anteilig belastet
 - Verplanbare Kapazität = Kapazität × (1 − Puffer)
+- Regelmäßige Meetings (h/Monat je PM) werden in jedem Monat fest zu den Projektstunden addiert
 - Auslastung % = Stunden / verplanbare Kapazität
 - Farben: Grün unter 80 %, Gelb 80–100 %, Rot über 100 %
 
