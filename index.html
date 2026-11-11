@@ -55,6 +55,9 @@ table.edit td{min-width:86px}
 table.edit td.c{min-width:0;width:1%;text-align:center;white-space:nowrap}
 table.edit td.w{min-width:170px}
 table.edit td.d{min-width:190px}
+.flags{display:flex;flex-direction:column;gap:3px;min-width:150px}
+.flags label{display:flex;gap:6px;align-items:center;white-space:nowrap;font-size:.88rem}
+.flags input{flex:none}
 .warn{background:#fff4e5;border:1px solid #f0b45c;color:#7a4b00;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:.9rem}
 .ok{color:var(--g-t);font-size:.9rem;margin-top:8px}
 .empty{color:var(--muted);font-style:italic;padding:8px 0}
@@ -113,7 +116,6 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
       <label><span>Faktor Klasse A</span><input type="number" data-k="fac" data-f="A" id="sFacA" min="0" step="0.1"></label>
       <label><span>Faktor Klasse B</span><input type="number" data-k="fac" data-f="B" id="sFacB" min="0" step="0.1"></label>
       <label><span>Faktor Klasse C</span><input type="number" data-k="fac" data-f="C" id="sFacC" min="0" step="0.1"></label>
-      <label><span>Hybrid-Zuschlag in h</span><input type="number" data-k="set" data-f="hybrid" id="sHybrid" min="0"></label>
     </div>
     <p class="sub" style="margin-top:8px">Verplanbare Kapazität = Kapazität × (1 − Puffer)</p>
 
@@ -123,6 +125,13 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
       <tbody id="typesBody"></tbody>
     </table></div>
     <p><button type="button" class="sec" data-act="addType">+ Projekttyp</button></p>
+
+    <h3>Besonderheiten (je Projekt auswählbar, Zuschlag auf den Projektaufwand)</h3>
+    <div class="scroll"><table class="edit">
+      <thead><tr><th>Bezeichnung</th><th>Zuschlag %</th><th></th></tr></thead>
+      <tbody id="extrasBody"></tbody>
+    </table></div>
+    <p><button type="button" class="sec" data-act="addExtra">+ Besonderheit</button></p>
 
     <h3>Phasenverteilung (Monate relativ zum Eventmonat, 0 = Eventmonat)</h3>
     <div class="scroll"><table class="edit">
@@ -159,7 +168,7 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
     <h2>Projekte</h2>
     <p class="sub">Projektmanager, Projekttypen, Faktoren und Phasen werden auf der Seite <a href="#einstellungen">Einstellungen</a> gepflegt.</p>
     <div class="scroll"><table class="edit">
-      <thead><tr><th>Projektname</th><th>PM</th><th>Projekttyp</th><th>Klasse</th><th>Hybrid</th><th>Eventdatum</th><th></th></tr></thead>
+      <thead><tr><th>Projektname</th><th>PM</th><th>Projekttyp</th><th>Klasse</th><th>Besonderheiten</th><th>Eventdatum</th><th></th></tr></thead>
       <tbody id="projBody"></tbody>
     </table></div>
     <p><button type="button" class="sec" data-act="addProj">+ Projekt</button></p>
@@ -209,7 +218,11 @@ function defaults(){
   return {
     settings:{
       startMonth:now.getMonth()+1,startYear:now.getFullYear(),months:12,buffer:20,
-      factors:{A:1.5,B:1,C:0.6},hybrid:100,
+      factors:{A:1.5,B:1,C:0.6},
+      extras:[
+        {id:uid(),name:'Kurzfristig',pct:20},
+        {id:uid(),name:'Politisch / besondere Anforderungen',pct:25}
+      ],
       types:[
         {id:uid(),name:'Kultur-VA (Standard, wenig Kommunikation)',hours:120},
         {id:uid(),name:'BV / MV (Tagesversammlung, 500–1.000 Pax)',hours:120},
@@ -272,8 +285,9 @@ function compute(){
   var typeById={};s.types.forEach(function(t){typeById[t.id]=t;});
   var projs=state.projects.map(function(p){
     var t=typeById[p.type];
-    var base=(t?Math.max(0,t.hours):0)+(p.hybrid?Math.max(0,s.hybrid):0);
-    var total=base*Math.max(0,s.factors[p.cls]||0);
+    var xs=s.extras.filter(function(x){return p.flags.indexOf(x.id)>=0;});
+    var plus=xs.reduce(function(a,x){return a+x.pct;},0);
+    var total=(t?Math.max(0,t.hours):0)*Math.max(0,s.factors[p.cls]||0)*Math.max(0,1+plus/100);
     var ev=Math.round(p.year)*12+clamp(Math.round(p.month),1,12)-1;
     var inRange=0,row=rows[p.pm];
     s.phases.forEach(function(ph){
@@ -295,7 +309,7 @@ function compute(){
         }
       }
     });
-    return {proj:p,type:t,pm:row?row.pm:null,total:total,inRange:inRange};
+    return {proj:p,type:t,extras:xs,pm:row?row.pm:null,total:total,inRange:inRange};
   });
   var team={cap:0,hours:[],items:[]};
   for(var i=0;i<n;i++){team.hours.push(0);team.items.push([]);}
@@ -334,7 +348,11 @@ function renderSettings(){
   $('sMonths').value=s.months;
   $('sBuffer').value=s.buffer;
   $('sFacA').value=s.factors.A;$('sFacB').value=s.factors.B;$('sFacC').value=s.factors.C;
-  $('sHybrid').value=s.hybrid;
+  $('extrasBody').innerHTML=s.extras.map(function(x){
+    return '<tr><td class="w"><input type="text" maxlength="60" aria-label="Bezeichnung" data-k="extra" data-id="'+esc(x.id)+'" data-f="name" value="'+esc(x.name)+'"></td>'+
+      '<td><input type="number" aria-label="Zuschlag in Prozent" data-k="extra" data-id="'+esc(x.id)+'" data-f="pct" value="'+esc(x.pct)+'"></td>'+
+      '<td class="c"><button type="button" class="del" data-act="delExtra" data-id="'+esc(x.id)+'" aria-label="Besonderheit löschen">Löschen</button></td></tr>';
+  }).join('')||'<tr><td colspan="3" class="empty">Keine Besonderheiten angelegt.</td></tr>';
   $('typesBody').innerHTML=s.types.map(function(t){
     return '<tr><td class="w"><input type="text" maxlength="80" aria-label="Bezeichnung" data-k="type" data-id="'+esc(t.id)+'" data-f="name" value="'+esc(t.name)+'"></td>'+
       '<td><input type="number" min="0" aria-label="Basisstunden" data-k="type" data-id="'+esc(t.id)+'" data-f="hours" value="'+esc(t.hours)+'"></td>'+
@@ -363,7 +381,9 @@ function renderProjects(){
       '<td><select aria-label="PM" '+a+' data-f="pm">'+opts(state.pms,p.pm,'code','– offen –')+'</select></td>'+
       '<td class="w"><select aria-label="Projekttyp" '+a+' data-f="type">'+opts(state.settings.types,p.type,'name','– offen –')+'</select></td>'+
       '<td><select aria-label="Kundenklasse" '+a+' data-f="cls">'+['A','B','C'].map(function(c){return '<option'+(c===p.cls?' selected':'')+'>'+c+'</option>';}).join('')+'</select></td>'+
-      '<td class="c"><input type="checkbox" aria-label="Hybrid" '+a+' data-f="hybrid"'+(p.hybrid?' checked':'')+'></td>'+
+      '<td><div class="flags">'+(state.settings.extras.map(function(x){
+        return '<label><input type="checkbox" data-k="flag" data-id="'+esc(p.id)+'" data-x="'+esc(x.id)+'"'+(p.flags.indexOf(x.id)>=0?' checked':'')+'><span>'+esc(x.name||'(ohne Bezeichnung)')+'</span></label>';
+      }).join('')||'–')+'</div></td>'+
       '<td class="d"><div class="pair"><select aria-label="Eventmonat" '+a+' data-f="month">'+monthOpts(p.month)+'</select>'+
       '<input type="number" min="2000" max="2100" aria-label="Eventjahr" '+a+' data-f="year" value="'+esc(p.year)+'"></div></td>'+
       '<td class="c"><button type="button" class="del" data-act="delProj" data-id="'+esc(p.id)+'" aria-label="Projekt löschen">Löschen</button></td></tr>';
@@ -432,13 +452,13 @@ function renderOutput(){
   if(!c.projs.length)$('overview').innerHTML='<div class="empty">Noch keine Projekte angelegt.</div>';
   else{
     var tot=0,totIn=0;
-    $('overview').innerHTML='<table><thead><tr><th>Projekt</th><th>PM</th><th>Klasse</th><th>Typ</th><th>Event</th><th class="num">Gesamtaufwand</th><th class="num">davon im Zeitraum</th></tr></thead><tbody>'+
+    $('overview').innerHTML='<table><thead><tr><th>Projekt</th><th>PM</th><th>Klasse</th><th>Typ</th><th>Besonderheiten</th><th>Event</th><th class="num">Gesamtaufwand</th><th class="num">davon im Zeitraum</th></tr></thead><tbody>'+
       c.projs.map(function(x){
         var p=x.proj;tot+=x.total;totIn+=x.inRange;
-        return '<tr><td>'+esc(p.name||'(ohne Namen)')+'</td><td>'+(x.pm?esc(x.pm.code):'–')+'</td><td>'+esc(p.cls)+'</td><td>'+(x.type?esc(x.type.name):'–')+(p.hybrid?' + Hybrid':'')+'</td>'+
+        return '<tr><td>'+esc(p.name||'(ohne Namen)')+'</td><td>'+(x.pm?esc(x.pm.code):'–')+'</td><td>'+esc(p.cls)+'</td><td>'+(x.type?esc(x.type.name):'–')+'</td><td>'+(x.extras.map(function(e){return esc(e.name);}).join(', ')||'–')+'</td>'+
           '<td>'+mLabel(Math.round(p.year)*12+clamp(Math.round(p.month),1,12)-1)+'</td><td class="num">'+fmt(x.total)+' h</td><td class="num">'+fmt(x.inRange)+' h</td></tr>';
       }).join('')+
-      '<tr><th colspan="5">Summe</th><th class="num">'+fmt(tot)+' h</th><th class="num">'+fmt(totIn)+' h</th></tr></tbody></table>';
+      '<tr><th colspan="6">Summe</th><th class="num">'+fmt(tot)+' h</th><th class="num">'+fmt(totIn)+' h</th></tr></tbody></table>';
   }
 
   // Hinweise
@@ -463,22 +483,32 @@ function renderAll(){renderSettings();renderPMs();renderProjects();renderOutput(
 /* ---------- Ereignisse ---------- */
 function find(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i];return null;}
 function remove(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id){list.splice(i,1);return;}}
-var NUMF={startMonth:1,startYear:1,months:1,buffer:1,hybrid:1,hours:1,from:1,to:1,pct:1,cap:1,month:1,year:1};
+var NUMF={startMonth:1,startYear:1,months:1,buffer:1,hours:1,from:1,to:1,pct:1,cap:1,month:1,year:1};
 
 function onEdit(el){
   var k=el.dataset.k,f=el.dataset.f;
   if(!k)return;
+  if(k==='flag'){
+    var pj=find(state.projects,el.dataset.id);
+    if(!pj)return;
+    var at=pj.flags.indexOf(el.dataset.x);
+    if(el.checked&&at<0)pj.flags.push(el.dataset.x);
+    if(!el.checked&&at>=0)pj.flags.splice(at,1);
+    renderOutput();return;
+  }
   var v=el.type==='checkbox'?el.checked:(NUMF[f]||k==='fac'?num(el.value):el.value);
   var s=state.settings,o=null;
   if(k==='set')o=s;
   else if(k==='fac')o=s.factors;
   else if(k==='type')o=find(s.types,el.dataset.id);
   else if(k==='phase')o=find(s.phases,el.dataset.id);
+  else if(k==='extra')o=find(s.extras,el.dataset.id);
   else if(k==='pm')o=find(state.pms,el.dataset.id);
   else if(k==='proj')o=find(state.projects,el.dataset.id);
   if(!o)return;
   o[f]=v;
   if((k==='type'&&f==='name')||(k==='pm'&&f==='code'))refreshProjectSelects();
+  if(k==='extra'&&f==='name')renderProjects();
   if(k!=='proj')saveConfig();
   renderOutput();
 }
@@ -508,6 +538,12 @@ document.addEventListener('click',function(e){
   }
   else if(act==='addPhase'){s.phases.push({id:uid(),name:'Neue Phase',from:0,to:0,pct:0});renderSettings();focusLast('phasesBody');}
   else if(act==='delPhase'){remove(s.phases,id);renderSettings();}
+  else if(act==='addExtra'){s.extras.push({id:uid(),name:'Neue Besonderheit',pct:10});renderSettings();renderProjects();focusLast('extrasBody');}
+  else if(act==='delExtra'){
+    remove(s.extras,id);
+    state.projects.forEach(function(p){var i=p.flags.indexOf(id);if(i>=0)p.flags.splice(i,1);});
+    renderSettings();renderProjects();
+  }
   else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:140});renderPMs();refreshProjectSelects();focusLast('pmsBody');}
   else if(act==='delPM'){
     remove(state.pms,id);state.projects.forEach(function(p){if(p.pm===id)p.pm='';});
@@ -516,7 +552,7 @@ document.addEventListener('click',function(e){
   }
   else if(act==='addProj'){
     var ev=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1+6;
-    state.projects.push({id:uid(),name:'',pm:state.pms[0]?state.pms[0].id:'',type:s.types[0]?s.types[0].id:'',cls:'B',hybrid:false,month:ev%12+1,year:Math.floor(ev/12)});
+    state.projects.push({id:uid(),name:'',pm:state.pms[0]?state.pms[0].id:'',type:s.types[0]?s.types[0].id:'',cls:'B',flags:[],month:ev%12+1,year:Math.floor(ev/12)});
     renderProjects();focusLast('projBody');
   }
   else if(act==='delProj'){remove(state.projects,id);renderProjects();}
@@ -531,7 +567,7 @@ document.addEventListener('click',function(e){
   else if(act==='resetSettings'){
     if(!confirm('Einstellungen, Projekttypen, Phasen und Projektmanager auf die Standardwerte zurücksetzen? Projekte verlieren dabei PM und Projekttyp.'))return;
     var keep=state.projects;
-    keep.forEach(function(p){p.pm='';p.type='';});
+    keep.forEach(function(p){p.pm='';p.type='';p.flags=[];});
     state=defaults();state.projects=keep;selected=null;
     try{localStorage.removeItem(KEY);}catch(err){}
     renderAll();return;
@@ -551,16 +587,16 @@ function loadExample(){
   var s=state.settings,t=s.types,start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
   var pm=function(code,cap){var p={id:uid(),code:code,cap:cap};state.pms.push(p);return p.id;};
   var ab=pm('AB',140),ck=pm('CK',140),ms=pm('MS',100);
-  var pr=function(name,pmId,ti,c,hyb,off){
-    var ev=start+off,type=t[ti]||t[0];
-    state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cls:c,hybrid:hyb,month:ev%12+1,year:Math.floor(ev/12)});
+  var pr=function(name,pmId,ti,c,xi,off){
+    var ev=start+off,type=t[ti]||t[0],x=s.extras[xi];
+    state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cls:c,flags:x?[x.id]:[],month:ev%12+1,year:Math.floor(ev/12)});
   };
-  pr('Jahreskongress Kardiologie',ab,3,'A',true,6);
-  pr('Mitgliederversammlung Verband',ab,1,'B',false,4);
-  pr('Fachkongress Radiologie',ck,2,'B',true,5);
-  pr('Corporate Kick-off',ck,4,'C',false,9);
-  pr('Konzertreihe Sommer',ms,0,'A',false,3);
-  pr('Kongress Hausärztetag',ms,2,'B',false,8);
+  pr('Jahreskongress Kardiologie',ab,3,'A',1,6);
+  pr('Mitgliederversammlung Verband',ab,1,'B',-1,4);
+  pr('Fachkongress Radiologie',ck,2,'B',0,5);
+  pr('Corporate Kick-off',ck,4,'C',-1,9);
+  pr('Konzertreihe Sommer',ms,0,'A',-1,3);
+  pr('Kongress Hausärztetag',ms,2,'B',-1,8);
   renderAll();
 }
 
@@ -586,7 +622,7 @@ function sanitize(d){
     months:clamp(Math.round(n(s.months,12)),1,60),
     buffer:n(s.buffer,20),
     factors:{A:n(f.A,1.5),B:n(f.B,1),C:n(f.C,0.6)},
-    hybrid:n(s.hybrid,100),
+    extras:Array.isArray(s.extras)?arr(s.extras).map(function(x){return {id:str(x.id,40)||uid(),name:str(x.name,60),pct:n(x.pct,0)};}):ds.extras,
     types:arr(s.types).map(function(t){return {id:str(t.id,40)||uid(),name:str(t.name,80),hours:n(t.hours,0)};}),
     phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:n(p.from,0),to:n(p.to,0),pct:n(p.pct,0)};})
   },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,140)};}),projects:[]};
@@ -594,7 +630,8 @@ function sanitize(d){
   out.projects=arr(d.projects).map(function(p){
     var pm=str(p.pm,40),type=str(p.type,40),c=str(p.cls,1).toUpperCase();
     return {id:str(p.id,40)||uid(),name:str(p.name,120),pm:has(out.pms,pm)?pm:'',type:has(out.settings.types,type)?type:'',
-      cls:c==='A'||c==='B'||c==='C'?c:'B',hybrid:!!p.hybrid,
+      cls:c==='A'||c==='B'||c==='C'?c:'B',
+      flags:(Array.isArray(p.flags)?p.flags:[]).map(function(x){return str(x,40);}).filter(function(x,i,l){return has(out.settings.extras,x)&&l.indexOf(x)===i;}),
       month:clamp(Math.round(n(p.month,1)),1,12),year:Math.round(n(p.year,ds.startYear))};
   });
   return out;
