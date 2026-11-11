@@ -14,12 +14,14 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 ## Bedienung
 
 1. Seite **Einstellungen** (einmalig):
-   - **Team**: Kürzel, Kapazität und durchschnittliche Meeting-Stunden pro Monat je PM, dazu der Puffer in %.
-   - **Projekttypen**: Bezeichnung und Basisstunden.
-   - **Erweiterte Einstellungen** (eingeklappt): Faktoren der Kundenklassen, Besonderheiten, Phasenverteilung.
+   - **Team**: Kürzel, Kapazität sowie Meetings & Grundlast pro Monat je PM, dazu der Puffer in %.
+   - **Größenklassen**: S, M, L, XL mit Basisstunden.
+   - **Erweiterte Einstellungen** (eingeklappt): Aufwandsfaktoren, Grenzen des Gesamtfaktors, Monatsprofil und Projektphasen je Komplexität.
    - Jede Änderung wird automatisch im Browser gespeichert.
 2. Seite **Planung**:
-   - Mit **+ Projekt** ein Projekt anlegen und aufklappen: Name, Eventdatum, Projekttyp, Kunde (A/B/C) und Projektstart wählen.
+   - Mit **+ Projekt** ein Projekt anlegen und aufklappen: Name, Eventdatum, Größenklasse, Komplexität und Projektstart wählen.
+   - Die Komplexität kann direkt gewählt oder über den Score aus zehn Kriterien (je 0 bis 2 Punkte) bestimmt werden.
+   - Zutreffende **Aufwandsfaktoren** ankreuzen.
    - Unter **Projektmanager** steht der Hauptansprechpartner als erste Zeile mit seinem Anteil; mit **+ Weiterer PM** zusätzliche PM zuordnen und deren Rolle und Gewicht festlegen.
    - Der Zeitraum der Auslastung wird direkt über der Heatmap eingestellt.
 3. Heatmap, Hinweise und Projektübersicht werden bei jeder Änderung sofort neu berechnet. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
@@ -28,17 +30,32 @@ Zum Ausprobieren: **Beispieldaten laden**.
 
 ### Berechnung
 
-- Projektaufwand = Basisstunden × Faktor der Kundenklasse × (1 + Summe der Zuschläge der gewählten Besonderheiten)
-- Der Aufwand wird gemäß Phasenverteilung auf die Monate verteilt, jeder Phasenanteil gleichmäßig auf die Monate der Phase. Phasen können mit halben Monaten beginnen oder enden; angeschnittene Monate werden anteilig belastet.
+- **Gesamtstunden** = Basisstunden der Größenklasse × Gesamtfaktor
+- **Gesamtfaktor** = 1 + Summe der gewählten Zu- und Abschläge, begrenzt auf 0,7 bis 1,5
+- **Komplexität** (einfach, mittel, komplex) bestimmt nur die Verteilung, nicht die Stunden. Score 0–5 = einfach, 6–10 = mittel, ab 11 = komplex (16–20 gilt als sehr komplex und nutzt das komplexe Profil).
+- **Monatsprofil**: Die Gesamtstunden werden je Komplexität auf die Zeiträume vor, im und nach dem Veranstaltungsmonat verteilt; der Anteil eines Zeitraums gleichmäßig auf seine Monate.
+
+  | Zeitraum | einfach | mittel | komplex |
+  |---|---|---|---|
+  | Mehr als 6 Monate vorher (Monat −12 bis −7) | 2 % | 4 % | 7 % |
+  | 6–4 Monate vorher | 5 % | 8 % | 10 % |
+  | 3 Monate vorher | 8 % | 10 % | 11 % |
+  | 2 Monate vorher | 15 % | 17 % | 18 % |
+  | 1 Monat vorher | 28 % | 28 % | 27 % |
+  | VA-Monat | 34 % | 27 % | 20 % |
+  | Monat danach | 8 % | 6 % | 7 % |
+
+- **Projektphasen** (acht Phasen von Übernahme bis Abschluss): Die Stunden je Phase werden im Projekt nur zur Information angezeigt.
 - **Projektstart „Kurzfristig“** (3 bis 6 Monate vor dem Event): Der Gesamtaufwand bleibt gleich. Stunden, die vor dem Projektstart lägen, werden gleichmäßig auf die Monate vom Projektstart bis zum Monat vor dem Event verteilt.
 - **Mehrere PM je Projekt**:
   - *Hauptansprechpartner*: trägt den Projektaufwand abzüglich der Themen-Anteile.
-  - *Thema / Teilbereich*: übernimmt den eingestellten Prozentanteil des Aufwands in jedem Monat (Standard 20 %, bei mehreren Themen entsprechend erhöhen).
+  - *Thema / Teilbereich*: übernimmt den eingestellten Prozentanteil des Aufwands in jedem Monat (Standard 20 %).
   - *Nur vor Ort (Aufbau, Durchführung, Abbau)*: zusätzliche Stunden im Eventmonat (Standard 30 h), sie kommen zum Projektaufwand hinzu.
-- Regelmäßige Meetings (h/Monat je PM) werden in jedem Monat fest addiert.
-- Verplanbare Kapazität = Kapazität × (1 − Puffer)
-- Auslastung % = Stunden / verplanbare Kapazität
+- **Verfügbare Kapazität** = (Kapazität − Meetings & Grundlast) × (1 − Puffer)
+- **Auslastung %** = Veranstaltungsstunden / verfügbare Kapazität
 - Farben: Grün unter 80 %, Gelb 80–100 %, Rot über 100 %
+
+Alle Stundenwerte und Prozentsätze sind Planungsannahmen und in den Einstellungen änderbar.
 
 ## Veröffentlichen mit GitHub Pages
 

@@ -60,6 +60,13 @@ table.edit td.d{min-width:190px}
 .flags{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px}
 .flags label{display:flex;gap:6px;align-items:center;font-size:.9rem}
 .flags input{flex:none}
+.flags small{color:var(--muted)}
+.grid.two{grid-template-columns:repeat(2,minmax(120px,200px))}
+details.score{margin-top:12px;border:1px dashed var(--line);border-radius:6px;padding:8px 10px}
+details.score>summary{font-size:.9rem;color:var(--accent)}
+details.score .grid{margin-top:8px}
+.scoreinfo,.facinfo{color:var(--muted);font-weight:400}
+.info{font-size:.85rem;color:var(--muted);margin-top:10px}
 details.proj{border:1px solid var(--line);border-radius:7px;margin-bottom:8px;background:#fff}
 details.proj[open]{border-color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 details>summary{cursor:pointer}
@@ -138,53 +145,59 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 
   <section>
     <h2>Team</h2>
-    <p class="sub">Nur Kürzel, keine Klarnamen. „Meetings“ = durchschnittliche Stunden pro Monat für Jours fixes und regelmäßige Termine (wöchentlich 2 h ≈ 9 h/Monat).</p>
+    <p class="sub">Nur Kürzel, keine Klarnamen. Kapazität = Arbeitsstunden pro Monat. „Meetings &amp; Grundlast“ = Regeltermine, Administration, Prozessarbeit und sonstige Aufgaben; sie werden von der Kapazität abgezogen.</p>
     <div class="scroll"><table class="edit">
-      <thead><tr><th>Kürzel</th><th>Kapazität (h/Monat)</th><th>Meetings (h/Monat)</th><th></th></tr></thead>
+      <thead><tr><th>Kürzel</th><th>Kapazität (h/Monat)</th><th>Meetings &amp; Grundlast (h/Monat)</th><th></th></tr></thead>
       <tbody id="pmsBody"></tbody>
     </table></div>
     <p><button type="button" class="sec" data-act="addPM">+ Projektmanager</button></p>
     <div class="grid one">
-      <label><span>Puffer für Unvorhergesehenes in %</span><input type="number" data-k="set" data-f="buffer" id="sBuffer" min="0" max="100"></label>
+      <label><span>Puffer für Urlaub, Krankheit, Unvorhergesehenes in %</span><input type="number" data-k="set" data-f="buffer" id="sBuffer" min="0" max="100"></label>
     </div>
-    <p class="sub" style="margin-top:6px">Dieser Anteil der Kapazität bleibt frei. Verplanbar = Kapazität × (1 − Puffer).</p>
+    <p class="sub" style="margin-top:6px">Verfügbar für Veranstaltungen = (Kapazität − Meetings &amp; Grundlast) × (1 − Puffer).</p>
   </section>
 
   <section>
-    <h2>Projekttypen</h2>
-    <p class="sub">Basisstunden = Gesamtaufwand eines normalen Projekts dieses Typs.</p>
+    <h2>Größenklassen</h2>
+    <p class="sub">Basisstunden = Projektmanagement-Aufwand einer Veranstaltung dieser Klasse vor Zu- und Abschlägen.</p>
     <div class="scroll"><table class="edit">
       <thead><tr><th>Bezeichnung</th><th>Basisstunden</th><th></th></tr></thead>
       <tbody id="typesBody"></tbody>
     </table></div>
-    <p><button type="button" class="sec" data-act="addType">+ Projekttyp</button></p>
+    <p><button type="button" class="sec" data-act="addType">+ Größenklasse</button></p>
   </section>
 
   <section>
     <details id="advanced">
-      <summary><h2>Erweiterte Einstellungen</h2><span class="sub">Kundenklassen, Besonderheiten, Phasen – selten zu ändern</span></summary>
+      <summary><h2>Erweiterte Einstellungen</h2><span class="sub">Aufwandsfaktoren, Monatsprofil, Projektphasen – selten zu ändern</span></summary>
 
-      <h3>Kundenklassen (Faktor auf die Basisstunden)</h3>
-      <div class="grid">
-        <label><span>A – aufwendig</span><input type="number" data-k="fac" data-f="A" id="sFacA" min="0" step="0.1"></label>
-        <label><span>B – normal</span><input type="number" data-k="fac" data-f="B" id="sFacB" min="0" step="0.1"></label>
-        <label><span>C – einfach</span><input type="number" data-k="fac" data-f="C" id="sFacC" min="0" step="0.1"></label>
-      </div>
-
-      <h3>Besonderheiten (je Projekt auswählbar, Zuschlag auf den Aufwand)</h3>
+      <h3>Aufwandsfaktoren (je Projekt auswählbar, Zu- oder Abschlag in %)</h3>
       <div class="scroll"><table class="edit">
-        <thead><tr><th>Bezeichnung</th><th>Zuschlag %</th><th></th></tr></thead>
+        <thead><tr><th>Bezeichnung</th><th>Zuschlag % (negativ = Abschlag)</th><th></th></tr></thead>
         <tbody id="extrasBody"></tbody>
       </table></div>
-      <p><button type="button" class="sec" data-act="addExtra">+ Besonderheit</button></p>
+      <p><button type="button" class="sec" data-act="addExtra">+ Aufwandsfaktor</button></p>
+      <div class="grid one two">
+        <label><span>Gesamtfaktor mindestens</span><input type="number" data-k="set" data-f="facMin" id="sFacMin" min="0" step="0.05"></label>
+        <label><span>Gesamtfaktor höchstens</span><input type="number" data-k="set" data-f="facMax" id="sFacMax" min="0" step="0.05"></label>
+      </div>
+      <p class="sub" style="margin-top:6px">Die gewählten Zu- und Abschläge werden addiert und auf diesen Bereich begrenzt.</p>
 
-      <h3>Phasenverteilung (Monate relativ zum Eventmonat, 0 = Eventmonat)</h3>
+      <h3>Monatsprofil: Anteil der Stunden je Zeitraum und Komplexität</h3>
       <div class="scroll"><table class="edit">
-        <thead><tr><th>Phase</th><th>von Monat</th><th>bis Monat</th><th>Anteil %</th><th></th></tr></thead>
+        <thead><tr><th>Zeitraum</th><th>von Monat</th><th>bis Monat</th><th>einfach %</th><th>mittel %</th><th>komplex %</th><th></th></tr></thead>
         <tbody id="phasesBody"></tbody>
       </table></div>
-      <p class="sub" style="margin-top:8px">Halbe Monate sind möglich: „von −1,5“ bedeutet ab 6 Wochen vor dem Eventmonat. Angeschnittene Monate werden anteilig belastet.</p>
-      <p><button type="button" class="sec" data-act="addPhase">+ Phase</button></p>
+      <p class="sub" style="margin-top:8px">Monate relativ zum Veranstaltungsmonat (0 = VA-Monat, −1 = Monat davor). Der Anteil eines Zeitraums wird gleichmäßig auf seine Monate verteilt. Halbe Monate sind möglich.</p>
+      <p><button type="button" class="sec" data-act="addPhase">+ Zeitraum</button></p>
+
+      <h3>Projektphasen: Anteil der Stunden je Phase und Komplexität</h3>
+      <div class="scroll"><table class="edit">
+        <thead><tr><th>Phase</th><th>einfach %</th><th>mittel %</th><th>komplex %</th><th></th></tr></thead>
+        <tbody id="stepsBody"></tbody>
+      </table></div>
+      <p class="sub" style="margin-top:8px">Nur zur Information je Projekt („Stunden je Phase“); die Auslastung rechnet mit dem Monatsprofil.</p>
+      <p><button type="button" class="sec" data-act="addStep">+ Phase</button></p>
       <div id="phaseMsg"></div>
     </details>
   </section>
@@ -202,7 +215,7 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 
   <section>
     <h2>Projekte</h2>
-    <p class="sub">Zum Bearbeiten ein Projekt aufklappen. Team und Projekttypen stehen unter <a href="#einstellungen">Einstellungen</a>.</p>
+    <p class="sub">Zum Bearbeiten ein Projekt aufklappen. Team und Größenklassen stehen unter <a href="#einstellungen">Einstellungen</a>.</p>
     <div id="projList"></div>
     <p style="margin-bottom:0"><button type="button" data-act="addProj">+ Projekt</button></p>
   </section>
@@ -246,14 +259,31 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 
 var MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 var MONS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-var CLS={A:'aufwendig',B:'normal',C:'einfach'};
+var CX=[['e','einfach'],['m','mittel'],['k','komplex']];
+var CXL={e:'einfach',m:'mittel',k:'komplex'};
 var LEADS=[[0,'Regulär (volle Vorlaufzeit)'],[6,'Kurzfristig – Start 6 Monate vorher'],[5,'Kurzfristig – Start 5 Monate vorher'],[4,'Kurzfristig – Start 4 Monate vorher'],[3,'Kurzfristig – Start 3 Monate vorher']];
 // Rollen weiterer PM: "thema" nimmt dem Hauptansprechpartner einen Anteil ab, "ort" sind Zusatzstunden im Eventmonat
 var ROLES={
   thema:{label:'Thema / Teilbereich',short:'Thema',unit:'% vom Aufwand',def:20},
   ort:{label:'Nur vor Ort (Aufbau, Durchführung, Abbau)',short:'Vor Ort',unit:'h im Eventmonat',def:30}
 };
-var MEET={name:'Regelmäßige Meetings'};
+// Komplexitätsscore: zehn Kriterien mit je 0, 1 oder 2 Punkten
+var CRIT=[
+  ['Veranstaltungsgröße / PAX',['unter 500','500–1.500','über 1.500']],
+  ['Räume / Flächen',['1–2','mehrere Räume','viele Räume / große Gebäudeteile']],
+  ['Veranstaltungstage',['1 Tag','2–3 Tage','4 oder mehr Tage']],
+  ['Ausstellung',['keine','kleine Ausstellung','umfangreich, viele Einzelstände']],
+  ['Technik',['Standard','erweitert','komplexe Produktion / Sondertechnik']],
+  ['Logistik',['gering','mehrere Lieferungen / Dienstleister','komplexer Auf-/Abbau, Sonderlogistik']],
+  ['Sicherheit',['Standard','erhöhte Anforderungen','umfangreiche Sonderkonzepte']],
+  ['Dienstleister / Schnittstellen',['wenige','mehrere','viele interne und externe']],
+  ['Kunden-/Projektstruktur',['etabliert / Wiederholung','teilweise neu','Neukunde / wechselnde Ansprechpartner']],
+  ['Änderungsdynamik',['früh stabil','regelmäßige Änderungen','viele kurzfristige Änderungen']]
+];
+function scoreSum(sc){return sc?sc.reduce(function(a,b){return a+b;},0):0;}
+function cxFromScore(n){return n<=5?'e':(n<=10?'m':'k');}
+function scoreLabel(n){return n<=5?'einfach':(n<=10?'mittel':(n<=15?'komplex':'sehr komplex (Profil wie komplex)'));}
+
 var seq=0;
 function uid(){return 'i'+(++seq)+Math.random().toString(36).slice(2,7);}
 function $(id){return document.getElementById(id);}
@@ -262,29 +292,55 @@ function num(v){var n=parseFloat(String(v).replace(',','.'));return isFinite(n)?
 function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
 function fmt(v,d){return v.toLocaleString('de-DE',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
 function fmtAuto(v){return fmt(v,v%1?1:0);}
+function sign(v){return (v>0?'+':(v<0?'−':''))+fmtAuto(Math.abs(v))+' %';}
 
 function defaults(){
   var now=new Date();
+  var ex=function(name,pct){return {id:uid(),name:name,pct:pct};};
+  var ph=function(name,from,to,e,m,k){return {id:uid(),name:name,from:from,to:to,pct:{e:e,m:m,k:k}};};
+  var st=function(name,e,m,k){return {id:uid(),name:name,pct:{e:e,m:m,k:k}};};
   return {
     settings:{
       startMonth:now.getMonth()+1,startYear:now.getFullYear(),months:12,buffer:20,
-      factors:{A:1.5,B:1,C:0.6},
+      facMin:0.7,facMax:1.5,
       extras:[
-        {id:uid(),name:'Politisch / besondere Anforderungen',pct:25}
+        ex('Kurzer Planungsvorlauf',20),
+        ex('Umfangreiche Ausstellung',20),
+        ex('Viele externe / internationale Schnittstellen',15),
+        ex('Komplexe Sicherheitsanforderungen',10),
+        ex('Hohe Änderungsdynamik',20),
+        ex('Neuer Kunde / neue Abläufe / wechselnde Ansprechpartner',10),
+        ex('Außergewöhnlich komplexe Logistik',15),
+        ex('Politisch / besondere Anforderungen',25),
+        ex('Etablierte Wiederholungsveranstaltung',-15),
+        ex('Kundeninformationen früh vollständig',-10),
+        ex('Klare Verantwortlichkeiten, stabile Planung',-10),
+        ex('Weitgehend standardisierte Leistungen',-15)
       ],
       types:[
-        {id:uid(),name:'Kultur-VA (Standard, wenig Kommunikation)',hours:120},
-        {id:uid(),name:'BV / MV (Tagesversammlung, 500–1.000 Pax)',hours:120},
-        {id:uid(),name:'Kongress mittel (800–1.000 Pax)',hours:400},
-        {id:uid(),name:'Kongress groß (1.000–5.000 Pax)',hours:900},
-        {id:uid(),name:'Corporate (viel Kommunikation, wie große VA)',hours:900}
+        {id:uid(),name:'S – kleine, einfache Veranstaltung',hours:55},
+        {id:uid(),name:'M – mittlere Veranstaltung',hours:95},
+        {id:uid(),name:'L – große / komplexe Veranstaltung',hours:155},
+        {id:uid(),name:'XL – sehr große / sehr komplexe Veranstaltung',hours:235}
       ],
       phases:[
-        {id:uid(),name:'Konzeption',from:-12,to:-7,pct:20},
-        {id:uid(),name:'Planung',from:-6,to:-2.5,pct:35},
-        {id:uid(),name:'Heiße Phase (ab 6 Wochen vorher)',from:-1.5,to:-1,pct:30},
-        {id:uid(),name:'Durchführung',from:0,to:0,pct:10},
-        {id:uid(),name:'Nachbereitung',from:1,to:1,pct:5}
+        ph('Mehr als 6 Monate vorher',-12,-7,2,4,7),
+        ph('6–4 Monate vorher',-6,-4,5,8,10),
+        ph('3 Monate vorher',-3,-3,8,10,11),
+        ph('2 Monate vorher',-2,-2,15,17,18),
+        ph('1 Monat vorher',-1,-1,28,28,27),
+        ph('VA-Monat',0,0,34,27,20),
+        ph('Monat danach',1,1,8,6,7)
+      ],
+      steps:[
+        st('Übernahme / Übergabe',8,6,5),
+        st('Grund- und Grobplanung',15,12,10),
+        st('Detailplanung',22,25,27),
+        st('Finalisierung / Beauftragung',20,24,25),
+        st('Aufbau',10,10,10),
+        st('Durchführung',12,12,12),
+        st('Abbau',5,4,3),
+        st('Abschluss / Abrechnung',8,7,8)
       ]
     },
     pms:[],projects:[]
@@ -292,19 +348,25 @@ function defaults(){
 }
 
 /* ---------- Lokale Speicherung der Einstellungen ---------- */
-var KEY='kapaplan.einstellungen.v1',storeOk=true;
+var KEY='kapaplan.einstellungen.v2',KEY_OLD='kapaplan.einstellungen.v1',storeOk=true;
 function saveConfig(){
   try{localStorage.setItem(KEY,JSON.stringify({settings:state.settings,pms:state.pms}));storeOk=true;}
   catch(e){storeOk=false;}
   renderSaveMsg();
 }
 function loadConfig(){
+  var d=defaults();
   try{
     var raw=localStorage.getItem(KEY);
-    if(!raw)return defaults();
-    var d=JSON.parse(raw);
-    return sanitize({settings:d.settings,pms:d.pms,projects:[]});
-  }catch(e){return defaults();}
+    if(raw){
+      var c=JSON.parse(raw);
+      return sanitize({settings:c.settings,pms:c.pms,projects:[]});
+    }
+    // Aus der Vorversion wird nur das Team übernommen; das Rechenmodell startet mit den neuen Standardwerten
+    var old=localStorage.getItem(KEY_OLD);
+    if(old)d.pms=sanitize({settings:d.settings,pms:JSON.parse(old).pms,projects:[]}).pms;
+  }catch(e){}
+  return d;
 }
 function renderSaveMsg(){
   $('saveMsg').innerHTML=storeOk
@@ -322,6 +384,7 @@ window.addEventListener('hashchange',route);
 var state=defaults();
 var selected=null;   // {pm:id|'team', i:Spaltenindex}
 var openProj={};     // aufgeklappte Projekte
+var openScore={};    // aufgeklappte Score-Bereiche
 
 /* ---------- Berechnung ---------- */
 function compute(){
@@ -329,14 +392,12 @@ function compute(){
   var n=clamp(Math.round(s.months)||1,1,60);
   var start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
   var buf=clamp(s.buffer,0,100)/100;
+  var fLo=Math.max(0,Math.min(s.facMin,s.facMax)),fHi=Math.max(0,s.facMin,s.facMax);
   var rows={},order=[];
   state.pms.forEach(function(p){
-    var r={pm:p,cap:Math.max(0,p.cap)*(1-buf),hours:[],items:[]};
-    var meet=Math.max(0,p.meet||0);
-    for(var i=0;i<n;i++){
-      r.hours.push(meet);
-      r.items.push(meet?[{proj:MEET,h:meet,phases:[],roles:[]}]:[]);
-    }
+    // Verfügbar für Veranstaltungen = (Kapazität − Meetings & Grundlast) × (1 − Puffer)
+    var r={pm:p,cap:Math.max(0,p.cap-Math.max(0,p.meet||0))*(1-buf),hours:[],items:[]};
+    for(var i=0;i<n;i++){r.hours.push(0);r.items.push([]);}
     rows[p.id]=r;order.push(r);
   });
   function add(row,i,p,h,phases,role){
@@ -353,11 +414,12 @@ function compute(){
   var projs=state.projects.map(function(p){
     var t=typeById[p.type];
     var xs=s.extras.filter(function(x){return p.flags.indexOf(x.id)>=0;});
-    var plus=xs.reduce(function(a,x){return a+x.pct;},0);
-    var total=(t?Math.max(0,t.hours):0)*Math.max(0,s.factors[p.cls]||0)*Math.max(0,1+plus/100);
+    var raw=1+xs.reduce(function(a,x){return a+x.pct;},0)/100;
+    var factor=clamp(raw,fLo,fHi);
+    var base=(t?Math.max(0,t.hours):0)*factor,total=base;
     var ev=Math.round(p.year)*12+clamp(Math.round(p.month),1,12)-1;
 
-    // 1. Aufwand nach Phasen auf Monate relativ zum Event verteilen
+    // 1. Aufwand nach Monatsprofil der Komplexität auf Monate relativ zum Event verteilen
     var dist={};
     function put(m,h,name){
       var d=dist[m]||(dist[m]={h:0,phases:[]});
@@ -366,8 +428,8 @@ function compute(){
     s.phases.forEach(function(ph){
       // Monat m belegt das Intervall [m, m+1); angeschnittene Monate zählen anteilig
       var a=clamp(Math.min(ph.from,ph.to),-120,120),b=clamp(Math.max(ph.from,ph.to),-120,120)+1;
-      var all=total*ph.pct/100;
-      if(!all)return;
+      var all=base*ph.pct[p.cx]/100;
+      if(!(all>0))return;
       for(var m=Math.floor(a);m<b;m++){
         var h=all*(Math.min(b,m+1)-Math.max(a,m))/(b-a);
         if(h>0)put(m,h,ph.name);
@@ -399,9 +461,11 @@ function compute(){
       if(m.role!=='ort')return;
       var h=Math.max(0,m.val),i=ev-start;
       total+=h;
-      if(i>=0&&i<n){inRange+=h;add(rows[m.pm],i,p,h,['Durchführung'],ROLES.ort.short);}
+      if(i>=0&&i<n){inRange+=h;add(rows[m.pm],i,p,h,['VA-Monat'],ROLES.ort.short);}
     });
-    return {proj:p,type:t,extras:xs,mainShare:Math.max(0,1-tsum/100),main:rows[p.pm]?rows[p.pm].pm:null,members:members,total:total,inRange:inRange,over:tsum>100,ev:ev};
+    return {proj:p,type:t,extras:xs,factor:factor,capped:Math.abs(raw-factor)>1e-9,base:base,
+      mainShare:Math.max(0,1-tsum/100),main:rows[p.pm]?rows[p.pm].pm:null,members:members,
+      total:total,inRange:inRange,over:tsum>100,ev:ev};
   });
   var team={cap:0,hours:[],items:[]};
   for(var i=0;i<n;i++){team.hours.push(0);team.items.push([]);}
@@ -433,30 +497,41 @@ function opts(list,sel,labelKey,emptyLabel){
   }).join('');
   return '<option value=""'+(found?'':' selected')+'>'+emptyLabel+'</option>'+h;
 }
+function pctCells(a,o){
+  return CX.map(function(c){
+    return '<td><input type="number" min="0" max="100" aria-label="Anteil '+c[1]+' in Prozent" '+a+' data-f="pct" data-c="'+c[0]+'" value="'+esc(o.pct[c[0]])+'"></td>';
+  }).join('');
+}
 function renderSettings(){
   var s=state.settings;
   $('sStartMonth').innerHTML=monthOpts(s.startMonth);
   $('sStartYear').value=s.startYear;
   $('sMonths').value=s.months;
   $('sBuffer').value=s.buffer;
-  $('sFacA').value=s.factors.A;$('sFacB').value=s.factors.B;$('sFacC').value=s.factors.C;
+  $('sFacMin').value=s.facMin;$('sFacMax').value=s.facMax;
   $('extrasBody').innerHTML=s.extras.map(function(x){
     return '<tr><td class="w"><input type="text" maxlength="60" aria-label="Bezeichnung" data-k="extra" data-id="'+esc(x.id)+'" data-f="name" value="'+esc(x.name)+'"></td>'+
       '<td><input type="number" aria-label="Zuschlag in Prozent" data-k="extra" data-id="'+esc(x.id)+'" data-f="pct" value="'+esc(x.pct)+'"></td>'+
-      '<td class="c"><button type="button" class="del" data-act="delExtra" data-id="'+esc(x.id)+'" aria-label="Besonderheit löschen">Löschen</button></td></tr>';
-  }).join('')||'<tr><td colspan="3" class="empty">Keine Besonderheiten angelegt.</td></tr>';
+      '<td class="c"><button type="button" class="del" data-act="delExtra" data-id="'+esc(x.id)+'" aria-label="Aufwandsfaktor löschen">Löschen</button></td></tr>';
+  }).join('')||'<tr><td colspan="3" class="empty">Keine Aufwandsfaktoren angelegt.</td></tr>';
   $('typesBody').innerHTML=s.types.map(function(t){
     return '<tr><td class="w"><input type="text" maxlength="80" aria-label="Bezeichnung" data-k="type" data-id="'+esc(t.id)+'" data-f="name" value="'+esc(t.name)+'"></td>'+
       '<td><input type="number" min="0" aria-label="Basisstunden" data-k="type" data-id="'+esc(t.id)+'" data-f="hours" value="'+esc(t.hours)+'"></td>'+
-      '<td class="c"><button type="button" class="del" data-act="delType" data-id="'+esc(t.id)+'" aria-label="Projekttyp löschen">Löschen</button></td></tr>';
-  }).join('')||'<tr><td colspan="3" class="empty">Keine Projekttypen angelegt.</td></tr>';
+      '<td class="c"><button type="button" class="del" data-act="delType" data-id="'+esc(t.id)+'" aria-label="Größenklasse löschen">Löschen</button></td></tr>';
+  }).join('')||'<tr><td colspan="3" class="empty">Keine Größenklassen angelegt.</td></tr>';
   $('phasesBody').innerHTML=s.phases.map(function(p){
     var a='data-k="phase" data-id="'+esc(p.id)+'"';
-    return '<tr><td class="w"><input type="text" maxlength="80" aria-label="Phase" '+a+' data-f="name" value="'+esc(p.name)+'"></td>'+
+    return '<tr><td class="w"><input type="text" maxlength="80" aria-label="Zeitraum" '+a+' data-f="name" value="'+esc(p.name)+'"></td>'+
       '<td><input type="number" step="0.5" aria-label="von Monat" '+a+' data-f="from" value="'+esc(p.from)+'"></td>'+
       '<td><input type="number" step="0.5" aria-label="bis Monat" '+a+' data-f="to" value="'+esc(p.to)+'"></td>'+
-      '<td><input type="number" min="0" max="100" aria-label="Anteil in Prozent" '+a+' data-f="pct" value="'+esc(p.pct)+'"></td>'+
-      '<td class="c"><button type="button" class="del" data-act="delPhase" data-id="'+esc(p.id)+'" aria-label="Phase löschen">Löschen</button></td></tr>';
+      pctCells(a,p)+
+      '<td class="c"><button type="button" class="del" data-act="delPhase" data-id="'+esc(p.id)+'" aria-label="Zeitraum löschen">Löschen</button></td></tr>';
+  }).join('')||'<tr><td colspan="7" class="empty">Kein Monatsprofil angelegt.</td></tr>';
+  $('stepsBody').innerHTML=s.steps.map(function(p){
+    var a='data-k="step" data-id="'+esc(p.id)+'"';
+    return '<tr><td class="w"><input type="text" maxlength="80" aria-label="Phase" '+a+' data-f="name" value="'+esc(p.name)+'"></td>'+
+      pctCells(a,p)+
+      '<td class="c"><button type="button" class="del" data-act="delStep" data-id="'+esc(p.id)+'" aria-label="Phase löschen">Löschen</button></td></tr>';
   }).join('')||'<tr><td colspan="5" class="empty">Keine Phasen angelegt.</td></tr>';
 }
 function renderPMs(){
@@ -464,7 +539,7 @@ function renderPMs(){
     var a='data-k="pm" data-id="'+esc(p.id)+'"';
     return '<tr><td><input type="text" maxlength="12" aria-label="Kürzel" '+a+' data-f="code" value="'+esc(p.code)+'"></td>'+
       '<td><input type="number" min="0" aria-label="Kapazität in Stunden pro Monat" '+a+' data-f="cap" value="'+esc(p.cap)+'"></td>'+
-      '<td><input type="number" min="0" aria-label="Meetings in Stunden pro Monat" '+a+' data-f="meet" value="'+esc(p.meet)+'"></td>'+
+      '<td><input type="number" min="0" aria-label="Meetings und Grundlast in Stunden pro Monat" '+a+' data-f="meet" value="'+esc(p.meet)+'"></td>'+
       '<td class="c"><button type="button" class="del" data-act="delPM" data-id="'+esc(p.id)+'" aria-label="Projektmanager löschen">Löschen</button></td></tr>';
   }).join('')||'<tr><td colspan="4" class="empty">Noch keine Projektmanager angelegt.</td></tr>';
 }
@@ -473,7 +548,12 @@ function renderProjects(){
   $('projList').innerHTML=state.projects.map(function(p){
     var a='data-k="proj" data-id="'+esc(p.id)+'"';
     var flags=s.extras.map(function(x){
-      return '<label><input type="checkbox" data-k="flag" data-id="'+esc(p.id)+'" data-x="'+esc(x.id)+'"'+(p.flags.indexOf(x.id)>=0?' checked':'')+'><span>'+esc(x.name||'(ohne Bezeichnung)')+'</span></label>';
+      return '<label><input type="checkbox" data-k="flag" data-id="'+esc(p.id)+'" data-x="'+esc(x.id)+'"'+(p.flags.indexOf(x.id)>=0?' checked':'')+'><span>'+esc(x.name||'(ohne Bezeichnung)')+' <small>'+sign(x.pct)+'</small></span></label>';
+    }).join('');
+    var sc=p.scores||[];
+    var crit=CRIT.map(function(c,i){
+      return '<label><span>'+c[0]+'</span><select data-k="score" data-id="'+esc(p.id)+'" data-i="'+i+'">'+
+        c[1].map(function(o,v){return '<option value="'+v+'"'+((sc[i]||0)===v?' selected':'')+'>'+v+' – '+o+'</option>';}).join('')+'</select></label>';
     }).join('');
     var team=p.team.map(function(m){
       var b='data-k="member" data-id="'+esc(p.id)+'" data-m="'+esc(m.id)+'"';
@@ -488,11 +568,14 @@ function renderProjects(){
       '<label class="wide"><span>Projektname</span><input type="text" maxlength="120" '+a+' data-f="name" value="'+esc(p.name)+'"></label>'+
       '<label><span>Eventdatum</span><div class="pair"><select aria-label="Eventmonat" '+a+' data-f="month">'+monthOpts(p.month)+'</select>'+
       '<input type="number" min="2000" max="2100" aria-label="Eventjahr" '+a+' data-f="year" value="'+esc(p.year)+'"></div></label>'+
-      '<label><span>Projekttyp</span><select '+a+' data-f="type">'+opts(s.types,p.type,'name','– offen –')+'</select></label>'+
-      '<label><span>Kunde</span><select '+a+' data-f="cls">'+['A','B','C'].map(function(c){return '<option value="'+c+'"'+(c===p.cls?' selected':'')+'>'+c+' – '+CLS[c]+' (×'+fmtAuto(s.factors[c])+')</option>';}).join('')+'</select></label>'+
+      '<label><span>Größenklasse</span><select '+a+' data-f="type">'+opts(s.types,p.type,'name','– offen –')+'</select></label>'+
+      '<label><span>Komplexität</span><select '+a+' data-f="cx">'+CX.map(function(c){return '<option value="'+c[0]+'"'+(c[0]===p.cx?' selected':'')+'>'+c[1]+'</option>';}).join('')+'</select></label>'+
       '<label><span>Projektstart</span><select '+a+' data-f="lead">'+LEADS.map(function(l){return '<option value="'+l[0]+'"'+(l[0]===p.lead?' selected':'')+'>'+l[1]+'</option>';}).join('')+'</select></label>'+
       '</div>'+
-      (flags?'<div class="flags">'+flags+'</div>':'')+
+      '<details class="score" data-pid="'+esc(p.id)+'"'+(openScore[p.id]?' open':'')+'><summary>Komplexität über 10 Kriterien bestimmen <span class="scoreinfo"></span></summary>'+
+      '<div class="grid">'+crit+'</div></details>'+
+      (flags?'<div class="tl" style="margin-top:12px">Aufwandsfaktoren <span class="facinfo"></span></div><div class="flags">'+flags+'</div>':'<span class="facinfo" hidden></span>')+
+      '<div class="info stepinfo"></div>'+
       '<div class="team"><div class="tl">Projektmanager</div>'+
       '<div class="mrow"><select aria-label="Hauptansprechpartner" '+a+' data-f="pm">'+opts(state.pms,p.pm,'code','– PM wählen –')+'</select>'+
       '<span class="rolefix">Hauptansprechpartner</span><span class="val"><b class="mainshare"></b><span>vom Aufwand (Rest)</span></span><span></span></div>'+
@@ -512,25 +595,37 @@ function teamText(x,long){
     return ', '+esc(pm.code||'?')+' ('+ROLES[m.role].short+' '+fmtAuto(Math.max(0,m.val))+(m.role==='thema'?' %':' h')+')';
   }).join('');
 }
+function badSums(list){
+  return CX.filter(function(c){
+    return Math.abs(list.reduce(function(a,p){return a+p.pct[c[0]];},0)-100)>0.001;
+  }).map(function(c){
+    return c[1]+' '+fmtAuto(list.reduce(function(a,p){return a+p.pct[c[0]];},0))+' %';
+  });
+}
 function renderOutput(){
   var c=compute(),s=state.settings;
 
-  // Zusammenfassungszeilen der Projekte
+  // Zusammenfassung und berechnete Angaben in den Projekten
   var kids=$('projList').children;
   c.projs.forEach(function(x,i){
-    var d=kids[i];
+    var d=kids[i],p=x.proj;
     if(!d||!d.querySelector)return;
-    d.querySelector('.pn').textContent=x.proj.name||'Neues Projekt';
-    d.querySelector('.mainshare').textContent=fmtAuto(x.mainShare*100)+' %';
+    d.querySelector('.pn').textContent=p.name||'Neues Projekt';
     d.querySelector('.pm').innerHTML=mLabel(x.ev)+' · '+teamText(x,false)+' · '+fmt(x.total)+' h';
+    d.querySelector('.mainshare').textContent=fmtAuto(x.mainShare*100)+' %';
+    var sum=scoreSum(p.scores);
+    d.querySelector('.scoreinfo').textContent=p.scores?'– Score '+sum+' von 20: '+scoreLabel(sum):'– optional';
+    d.querySelector('.facinfo').textContent='– Gesamtfaktor ×'+fmt(x.factor,2)+(x.capped?' (begrenzt auf '+fmt(Math.min(s.facMin,s.facMax),2)+' bis '+fmt(Math.max(s.facMin,s.facMax),2)+')':'');
+    d.querySelector('.stepinfo').textContent=x.base>0&&s.steps.length
+      ?'Stunden je Phase: '+s.steps.map(function(st){return (st.name||'?')+' '+fmt(x.base*st.pct[p.cx]/100)+' h';}).join(' · ')
+      :'';
   });
 
-  // Phasensumme
-  var sum=s.phases.reduce(function(a,p){return a+p.pct;},0);
-  var sumBad=Math.abs(sum-100)>0.001;
-  $('phaseMsg').innerHTML=sumBad
-    ?'<div class="warn" role="alert">Warnung: Die Phasenanteile ergeben '+fmtAuto(sum)+' % statt 100 %.</div>'
-    :'<div class="ok">Summe der Phasenanteile: 100 %</div>';
+  // Summen der Profile
+  var bad=badSums(s.phases).map(function(t){return 'Monatsprofil '+t;}).concat(badSums(s.steps).map(function(t){return 'Projektphasen '+t;}));
+  $('phaseMsg').innerHTML=bad.length
+    ?'<div class="warn" role="alert">Warnung: Diese Spalten ergeben nicht 100 %: '+esc(bad.join(', '))+'.</div>'
+    :'<div class="ok">Alle Spalten von Monatsprofil und Projektphasen ergeben 100 %.</div>';
 
   // Heatmap
   if(!c.rows.length){
@@ -560,10 +655,10 @@ function renderOutput(){
   else{
     var isTeam=selected.pm==='team',i=selected.i,items=row.items[i].slice().sort(function(a,b){return b.h-a.h;});
     var title=(isTeam?'Team gesamt':'PM '+esc(row.pm.code||'?'))+' – '+mLabel(c.months[i],true);
-    var html='<h3>'+title+'</h3><p class="sub">'+fmt(row.hours[i],1)+' h von '+fmt(row.cap,1)+' h verplanbarer Kapazität = '+pctText(pctOf(row.hours[i],row.cap))+'</p>';
+    var html='<h3>'+title+'</h3><p class="sub">'+fmt(row.hours[i],1)+' h Veranstaltungsstunden bei '+fmt(row.cap,1)+' h verfügbarer Kapazität = '+pctText(pctOf(row.hours[i],row.cap))+'</p>';
     if(!items.length)html+='<div class="empty">Keine Projekte in diesem Monat.</div>';
     else{
-      html+='<div class="scroll"><table><thead><tr><th>Projekt</th>'+(isTeam?'<th>PM</th>':'')+'<th>Rolle</th><th>Phase</th><th class="num">Stunden</th></tr></thead><tbody>'+
+      html+='<div class="scroll"><table><thead><tr><th>Projekt</th>'+(isTeam?'<th>PM</th>':'')+'<th>Rolle</th><th>Zeitraum</th><th class="num">Stunden</th></tr></thead><tbody>'+
         items.map(function(it){
           return '<tr><td>'+esc(it.proj.name||'(ohne Namen)')+'</td>'+(isTeam?'<td>'+esc(it.pm.code)+'</td>':'')+'<td>'+(esc(it.roles.join(', '))||'–')+'</td><td>'+(esc(it.phases.join(', '))||'–')+'</td><td class="num">'+fmt(it.h,1)+' h</td></tr>';
         }).join('')+'</tbody></table></div>';
@@ -575,13 +670,11 @@ function renderOutput(){
   if(!c.projs.length)$('overview').innerHTML='<div class="empty">Noch keine Projekte angelegt.</div>';
   else{
     var tot=0,totIn=0;
-    $('overview').innerHTML='<table><thead><tr><th>Projekt</th><th>PM</th><th>Klasse</th><th>Typ</th><th>Besonderheiten</th><th>Event</th><th class="num">Gesamtaufwand</th><th class="num">davon im Zeitraum</th></tr></thead><tbody>'+
+    $('overview').innerHTML='<table><thead><tr><th>Projekt</th><th>PM</th><th>Größenklasse</th><th>Komplexität</th><th>Faktor</th><th>Event</th><th class="num">Gesamtaufwand</th><th class="num">davon im Zeitraum</th></tr></thead><tbody>'+
       c.projs.map(function(x){
         var p=x.proj;tot+=x.total;totIn+=x.inRange;
-        var bes=x.extras.map(function(e){return esc(e.name);});
-        if(p.lead>0)bes.unshift('Kurzfristig ('+p.lead+' Mon.)');
-        return '<tr><td>'+esc(p.name||'(ohne Namen)')+'</td><td>'+teamText(x,true)+'</td><td>'+esc(p.cls)+'</td><td>'+(x.type?esc(x.type.name):'–')+'</td><td>'+(bes.join(', ')||'–')+'</td>'+
-          '<td>'+mLabel(x.ev)+'</td><td class="num">'+fmt(x.total)+' h</td><td class="num">'+fmt(x.inRange)+' h</td></tr>';
+        return '<tr><td>'+esc(p.name||'(ohne Namen)')+'</td><td>'+teamText(x,true)+'</td><td>'+(x.type?esc(x.type.name):'–')+'</td><td>'+CXL[p.cx]+(p.lead>0?', kurzfristig ('+p.lead+' Mon.)':'')+'</td>'+
+          '<td>×'+fmt(x.factor,2)+'</td><td>'+mLabel(x.ev)+'</td><td class="num">'+fmt(x.total)+' h</td><td class="num">'+fmt(x.inRange)+' h</td></tr>';
       }).join('')+
       '<tr><th colspan="6">Summe</th><th class="num">'+fmt(tot)+' h</th><th class="num">'+fmt(totIn)+' h</th></tr></tbody></table>';
   }
@@ -591,15 +684,15 @@ function renderOutput(){
   c.rows.forEach(function(r){
     for(var i=0;i<c.n;i++){
       var p=pctOf(r.hours[i],r.cap);
-      if(p>100.0001)li.push('<li class="over"><strong>'+esc(r.pm.code||'?')+'</strong> – '+mLabel(c.months[i],true)+': '+pctText(p)+' ('+fmt(r.hours[i])+' h bei '+fmt(r.cap)+' h verplanbar)</li>');
+      if(p>100.0001)li.push('<li class="over"><strong>'+esc(r.pm.code||'?')+'</strong> – '+mLabel(c.months[i],true)+': '+pctText(p)+' ('+fmt(r.hours[i])+' h bei '+fmt(r.cap)+' h verfügbar)</li>');
     }
   });
   var over=li.length;
-  if(sumBad)li.push('<li>Die Phasenanteile ergeben '+fmtAuto(sum)+' % statt 100 % (siehe Einstellungen).</li>');
+  if(bad.length)li.push('<li>Diese Profil-Spalten ergeben nicht 100 %: '+esc(bad.join(', '))+' (siehe Einstellungen).</li>');
   c.projs.forEach(function(x){
     var nm=esc(x.proj.name||'(ohne Namen)');
     if(!x.main)li.push('<li>Projekt „'+nm+'“ hat keinen Hauptansprechpartner; dessen Stunden fehlen in der Auslastung.</li>');
-    if(!x.type)li.push('<li>Projekt „'+nm+'“ hat keinen Projekttyp.</li>');
+    if(!x.type)li.push('<li>Projekt „'+nm+'“ hat keine Größenklasse.</li>');
     if(x.over)li.push('<li>Projekt „'+nm+'“: Die Themen-Anteile der weiteren PM liegen über 100 % und wurden auf 100 % gekürzt.</li>');
   });
   $('hints').innerHTML=(over?'':'<div class="ok" style="margin:0 0 6px">Kein PM liegt in einem Monat über 100 %.</div>')+(li.length?'<ul class="hints">'+li.join('')+'</ul>':'');
@@ -609,7 +702,7 @@ function renderAll(){renderSettings();renderPMs();renderProjects();renderOutput(
 /* ---------- Ereignisse ---------- */
 function find(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i];return null;}
 function remove(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id){list.splice(i,1);return;}}
-var NUMF={startMonth:1,startYear:1,months:1,buffer:1,hours:1,from:1,to:1,pct:1,cap:1,meet:1,month:1,year:1,lead:1,val:1};
+var NUMF={startMonth:1,startYear:1,months:1,buffer:1,facMin:1,facMax:1,hours:1,from:1,to:1,pct:1,cap:1,meet:1,month:1,year:1,lead:1,val:1};
 
 function onEdit(el){
   var k=el.dataset.k,f=el.dataset.f;
@@ -623,7 +716,17 @@ function onEdit(el){
     if(!el.checked&&at>=0)pj.flags.splice(at,1);
     renderOutput();return;
   }
-  var v=NUMF[f]||k==='fac'?num(el.value):el.value;
+  if(k==='score'){
+    pj=find(state.projects,el.dataset.id);
+    if(!pj)return;
+    if(!pj.scores)pj.scores=CRIT.map(function(){return 0;});
+    pj.scores[+el.dataset.i]=clamp(Math.round(num(el.value)),0,2);
+    pj.cx=cxFromScore(scoreSum(pj.scores));
+    var cxSel=el.closest('details.proj').querySelector('select[data-f="cx"]');
+    if(cxSel)cxSel.value=pj.cx;
+    renderOutput();return;
+  }
+  var v=NUMF[f]?num(el.value):el.value;
   if(k==='member'){
     pj=find(state.projects,el.dataset.id);
     var mb=pj&&find(pj.team,el.dataset.m);
@@ -636,16 +739,18 @@ function onEdit(el){
   }
   var s=state.settings,o=null;
   if(k==='set')o=s;
-  else if(k==='fac')o=s.factors;
   else if(k==='type')o=find(s.types,el.dataset.id);
   else if(k==='phase')o=find(s.phases,el.dataset.id);
+  else if(k==='step')o=find(s.steps,el.dataset.id);
   else if(k==='extra')o=find(s.extras,el.dataset.id);
   else if(k==='pm')o=find(state.pms,el.dataset.id);
   else if(k==='proj')o=find(state.projects,el.dataset.id);
   if(!o)return;
-  o[f]=v;
+  if(k==='proj'&&f==='cx'&&!CXL[v])return;
+  if(el.dataset.c){if(CXL[el.dataset.c])o.pct[el.dataset.c]=v;}
+  else o[f]=v;
   // Einstellungen liegen außerhalb der Projektliste: Liste neu aufbauen, damit Auswahllisten aktuell sind
-  if(k!=='proj'){saveConfig();if(!(k==='set'&&f!=='buffer'))renderProjects();}
+  if(k!=='proj'){saveConfig();if(k!=='set')renderProjects();}
   renderOutput();
 }
 document.addEventListener('input',function(e){onEdit(e.target);});
@@ -654,8 +759,11 @@ document.addEventListener('change',function(e){
   onEdit(e.target);
 });
 document.addEventListener('toggle',function(e){
-  var t=e.target;
-  if(t.classList&&t.classList.contains('proj')){if(t.open)openProj[t.dataset.pid]=true;else delete openProj[t.dataset.pid];}
+  var t=e.target,c=t.classList;
+  if(!c)return;
+  var map=c.contains('proj')?openProj:(c.contains('score')?openScore:null);
+  if(!map)return;
+  if(t.open)map[t.dataset.pid]=true;else delete map[t.dataset.pid];
 },true);
 
 document.addEventListener('click',function(e){
@@ -671,14 +779,16 @@ document.addEventListener('click',function(e){
   var b=e.target.closest('[data-act]');
   if(!b)return;
   var act=b.dataset.act,id=b.dataset.id,s=state.settings,pj;
-  if(act==='addType'){s.types.push({id:uid(),name:'Neuer Projekttyp',hours:200});renderSettings();renderProjects();focusLast('typesBody');}
+  if(act==='addType'){s.types.push({id:uid(),name:'Neue Größenklasse',hours:100});renderSettings();renderProjects();focusLast('typesBody');}
   else if(act==='delType'){
     remove(s.types,id);state.projects.forEach(function(p){if(p.type===id)p.type='';});
     renderSettings();renderProjects();
   }
-  else if(act==='addPhase'){s.phases.push({id:uid(),name:'Neue Phase',from:0,to:0,pct:0});renderSettings();focusLast('phasesBody');}
+  else if(act==='addPhase'){s.phases.push({id:uid(),name:'Neuer Zeitraum',from:0,to:0,pct:{e:0,m:0,k:0}});renderSettings();focusLast('phasesBody');}
   else if(act==='delPhase'){remove(s.phases,id);renderSettings();}
-  else if(act==='addExtra'){s.extras.push({id:uid(),name:'Neue Besonderheit',pct:10});renderSettings();renderProjects();focusLast('extrasBody');}
+  else if(act==='addStep'){s.steps.push({id:uid(),name:'Neue Phase',pct:{e:0,m:0,k:0}});renderSettings();focusLast('stepsBody');}
+  else if(act==='delStep'){remove(s.steps,id);renderSettings();}
+  else if(act==='addExtra'){s.extras.push({id:uid(),name:'Neuer Aufwandsfaktor',pct:10});renderSettings();renderProjects();focusLast('extrasBody');}
   else if(act==='delExtra'){
     remove(s.extras,id);
     state.projects.forEach(function(p){var i=p.flags.indexOf(id);if(i>=0)p.flags.splice(i,1);});
@@ -696,7 +806,7 @@ document.addEventListener('click',function(e){
   }
   else if(act==='addProj'){
     var ev=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1+6;
-    pj={id:uid(),name:'',pm:state.pms[0]?state.pms[0].id:'',type:s.types[0]?s.types[0].id:'',cls:'B',flags:[],lead:0,team:[],month:ev%12+1,year:Math.floor(ev/12)};
+    pj={id:uid(),name:'',pm:state.pms[0]?state.pms[0].id:'',type:s.types[0]?s.types[0].id:'',cx:'m',scores:null,flags:[],lead:0,team:[],month:ev%12+1,year:Math.floor(ev/12)};
     state.projects.push(pj);openProj[pj.id]=true;
     renderProjects();
     var last=$('projList').lastElementChild,inp=last&&last.querySelector('input');
@@ -705,7 +815,7 @@ document.addEventListener('click',function(e){
   else if(act==='delProj'){
     pj=find(state.projects,id);
     if(pj&&pj.name&&!confirm('Projekt „'+pj.name+'“ löschen?'))return;
-    remove(state.projects,id);delete openProj[id];renderProjects();
+    remove(state.projects,id);delete openProj[id];delete openScore[id];renderProjects();
   }
   else if(act==='addMember'){
     pj=find(state.projects,id);
@@ -724,14 +834,14 @@ document.addEventListener('click',function(e){
   }
   else if(act==='clear'){
     if(!confirm('Wirklich alle Projekte löschen? Einstellungen und Team bleiben erhalten.'))return;
-    state.projects=[];openProj={};selected=null;renderAll();return;
+    state.projects=[];openProj={};openScore={};selected=null;renderAll();return;
   }
   else if(act==='resetSettings'){
-    if(!confirm('Alle Einstellungen und das Team auf die Standardwerte zurücksetzen? Projekte verlieren dabei PM und Projekttyp.'))return;
+    if(!confirm('Alle Einstellungen und das Team auf die Standardwerte zurücksetzen? Projekte verlieren dabei PM, Größenklasse und Aufwandsfaktoren.'))return;
     var keep=state.projects;
     keep.forEach(function(p){p.pm='';p.type='';p.flags=[];p.team=[];});
     state=defaults();state.projects=keep;selected=null;
-    try{localStorage.removeItem(KEY);}catch(err){}
+    try{localStorage.removeItem(KEY);localStorage.removeItem(KEY_OLD);}catch(err){}
     renderAll();return;
   }
   else if(act==='export'){exportJSON();return;}
@@ -745,28 +855,29 @@ function focusLast(bodyId){
 
 /* ---------- Beispieldaten ---------- */
 function loadExample(){
-  selected=null;openProj={};state.pms=[];state.projects=[];
+  selected=null;openProj={};openScore={};state.pms=[];state.projects=[];
   var s=state.settings,t=s.types,start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
   var pm=function(code,cap,meet){var p={id:uid(),code:code,cap:cap,meet:meet};state.pms.push(p);return p.id;};
-  var ab=pm('AB',160,10),ck=pm('CK',160,10),ms=pm('MS',160,6);
-  var pr=function(name,pmId,ti,c,off,o){
+  var ab=pm('AB',160,20),ck=pm('CK',160,20),ms=pm('MS',160,15);
+  var pr=function(name,pmId,ti,cx,off,o){
     o=o||{};
-    var ev=start+off,type=t[ti]||t[0],x=o.flag?s.extras[0]:null;
-    state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cls:c,flags:x?[x.id]:[],lead:o.lead||0,
+    var ev=start+off,type=t[ti]||t[0];
+    state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cx:cx,scores:null,
+      flags:(o.flags||[]).map(function(i){return s.extras[i]&&s.extras[i].id;}).filter(Boolean),lead:o.lead||0,
       team:(o.team||[]).map(function(m){return {id:uid(),pm:m[0],role:m[1],val:m[2]};}),month:ev%12+1,year:Math.floor(ev/12)});
   };
-  pr('Jahreskongress Kardiologie',ab,3,'A',6,{flag:true,team:[[ck,'thema',20],[ms,'ort',30]]});
-  pr('Mitgliederversammlung Verband',ab,1,'B',4);
-  pr('Fachkongress Radiologie',ck,2,'B',5,{lead:4});
-  pr('Corporate Kick-off',ck,4,'C',9,{team:[[ab,'ort',20]]});
-  pr('Konzertreihe Sommer',ms,0,'A',3);
-  pr('Kongress Hausärztetag',ms,2,'B',8,{team:[[ck,'thema',30]]});
+  pr('Jahreskongress Kardiologie',ab,3,'k',6,{flags:[1,2],team:[[ck,'thema',20],[ms,'ort',30]]});
+  pr('Mitgliederversammlung Verband',ab,1,'e',4,{flags:[8]});
+  pr('Fachkongress Radiologie',ck,2,'m',5,{lead:4,flags:[0]});
+  pr('Corporate Kick-off',ck,2,'k',9,{flags:[4,5],team:[[ab,'ort',20]]});
+  pr('Konzertreihe Sommer',ms,0,'e',3,{flags:[11]});
+  pr('Kongress Hausärztetag',ms,2,'m',8,{team:[[ck,'thema',30]]});
   renderAll();
 }
 
 /* ---------- Export / Import ---------- */
 function exportJSON(){
-  var data=JSON.stringify({app:'kapaplan',version:2,settings:state.settings,pms:state.pms,projects:state.projects},null,2);
+  var data=JSON.stringify({app:'kapaplan',version:3,settings:state.settings,pms:state.pms,projects:state.projects},null,2);
   var url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
   var a=document.createElement('a');
   a.href=url;a.download='kapaplan-'+new Date().toISOString().slice(0,10)+'.json';
@@ -780,21 +891,27 @@ function sanitize(d){
   var str=function(v,max){return String(v==null?'':v).slice(0,max);};
   var arr=function(v){return Array.isArray(v)?v.filter(function(x){return x&&typeof x==='object';}).slice(0,500):[];};
   var has=function(list,id){return list.some(function(x){return x.id===id;});};
-  var f=s.factors&&typeof s.factors==='object'?s.factors:{};
+  // Ältere Dateien haben einen einzigen Prozentwert je Zeile; er gilt dann für alle Komplexitäten
+  var pct3=function(v){
+    if(v&&typeof v==='object')return {e:n(v.e,0),m:n(v.m,0),k:n(v.k,0)};
+    var x=n(v,0);return {e:x,m:x,k:x};
+  };
   var out={settings:{
     startMonth:clamp(Math.round(n(s.startMonth,ds.startMonth)),1,12),
     startYear:Math.round(n(s.startYear,ds.startYear)),
     months:clamp(Math.round(n(s.months,12)),1,60),
     buffer:n(s.buffer,20),
-    factors:{A:n(f.A,1.5),B:n(f.B,1),C:n(f.C,0.6)},
+    facMin:Math.max(0,n(s.facMin,0.7)),facMax:Math.max(0,n(s.facMax,1.5)),
     extras:Array.isArray(s.extras)?arr(s.extras).map(function(x){return {id:str(x.id,40)||uid(),name:str(x.name,60),pct:n(x.pct,0)};}):ds.extras,
     types:arr(s.types).map(function(t){return {id:str(t.id,40)||uid(),name:str(t.name,80),hours:n(t.hours,0)};}),
-    phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:n(p.from,0),to:n(p.to,0),pct:n(p.pct,0)};})
+    phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:n(p.from,0),to:n(p.to,0),pct:pct3(p.pct)};}),
+    steps:Array.isArray(s.steps)?arr(s.steps).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),pct:pct3(p.pct)};}):ds.steps
   },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,160),meet:n(p.meet,0)};}),projects:[]};
   out.projects=arr(d.projects).map(function(p){
-    var pm=str(p.pm,40),type=str(p.type,40),c=str(p.cls,1).toUpperCase(),lead=Math.round(n(p.lead,0));
+    var pm=str(p.pm,40),type=str(p.type,40),lead=Math.round(n(p.lead,0));
     return {id:str(p.id,40)||uid(),name:str(p.name,120),pm:has(out.pms,pm)?pm:'',type:has(out.settings.types,type)?type:'',
-      cls:c==='A'||c==='B'||c==='C'?c:'B',
+      cx:CXL[p.cx]?p.cx:'m',
+      scores:Array.isArray(p.scores)?CRIT.map(function(c,i){return clamp(Math.round(n(p.scores[i],0)),0,2);}):null,
       flags:(Array.isArray(p.flags)?p.flags:[]).map(function(x){return str(x,40);}).filter(function(x,i,l){return has(out.settings.extras,x)&&l.indexOf(x)===i;}),
       lead:lead>=3&&lead<=6?lead:0,
       team:arr(p.team).slice(0,10).map(function(m){
@@ -810,7 +927,7 @@ function importFile(input){
   if(!file)return;
   var r=new FileReader();
   r.onload=function(){
-    try{state=sanitize(JSON.parse(String(r.result)));selected=null;openProj={};renderAll();saveConfig();}
+    try{state=sanitize(JSON.parse(String(r.result)));selected=null;openProj={};openScore={};renderAll();saveConfig();}
     catch(err){alert('Die Datei konnte nicht gelesen werden: '+err.message);}
     input.value='';
   };
