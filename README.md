@@ -4,17 +4,18 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 
 - Eine einzige Datei: `index.html` (HTML, CSS und JavaScript inline)
 - Keine Frameworks, keine CDNs, keine externen Requests
-- Keine Cookies, kein localStorage, kein Tracking, kein Backend – alle Daten liegen nur im Arbeitsspeicher des Browsers
-- Speichern über **Export als JSON-Datei**, Laden über **Import JSON-Datei**
+- Keine Cookies, kein Tracking, kein Backend – es werden keine Daten übertragen
+- Einstellungen und PM-Kürzel werden lokal im Browser gespeichert (localStorage) und bleiben nach dem Neuladen erhalten
+- Projekte liegen nur im Arbeitsspeicher; Speichern über **Export als JSON-Datei**, Laden über **Import JSON-Datei**
 
-> Achtung: Beim Neuladen oder Schließen der Seite gehen alle Eingaben verloren. Vorher exportieren.
+> Achtung: Beim Neuladen oder Schließen der Seite gehen die Projekte verloren. Vorher exportieren.
+> Die gespeicherten Einstellungen gelten nur für den jeweiligen Browser. Auf andere Geräte lassen sie sich per JSON-Export und -Import übertragen.
 
 ## Bedienung
 
-1. **Einstellungen**: Planungszeitraum, Pufferquote, Faktoren der Kundenklassen, Projekttypen und Phasenverteilung anpassen.
-2. **Projektmanager**: Kürzel und Kapazität in Stunden pro Monat eintragen.
-3. **Projekte**: Projektname, PM, Projekttyp, Kundenklasse, Hybrid und Eventdatum eintragen.
-4. Heatmap, Projektübersicht und Hinweise werden bei jeder Änderung sofort neu berechnet. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
+1. Seite **Einstellungen**: Planungszeitraum, Pufferquote, Faktoren der Kundenklassen, Projekttypen, Phasenverteilung sowie Projektmanager (Kürzel und Kapazität in Stunden pro Monat) pflegen. Jede Änderung wird automatisch gespeichert.
+2. Seite **Planung**: Projekte mit Projektname, PM, Projekttyp, Kundenklasse, Hybrid und Eventdatum eintragen.
+3. Heatmap, Projektübersicht und Hinweise werden bei jeder Änderung sofort neu berechnet. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
 
 Zum Ausprobieren: **Beispieldaten laden**.
 
@@ -84,4 +85,4 @@ Eine neue Version von `index.html` in den Branch `main` hochladen oder pushen. G
 
 ## Datenschutz
 
-Es werden keine Daten gespeichert oder übertragen. Export und Import laufen ausschließlich lokal im Browser.
+Es werden keine Daten übertragen. Einstellungen und PM-Kürzel werden nur lokal im Browser gespeichert, Projekte gar nicht. Export und Import laufen ausschließlich lokal im Browser.

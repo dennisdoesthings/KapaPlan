@@ -18,6 +18,12 @@ body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-a
 header{background:var(--accent);color:#fff;padding:14px 16px}
 header h1{margin:0;font-size:1.25rem}
 header p{margin:2px 0 0;font-size:.85rem;opacity:.9}
+header .in{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+nav{display:flex;gap:6px}
+nav a{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.6);border-radius:6px;padding:7px 12px;min-height:38px;display:inline-flex;align-items:center}
+nav a:hover{background:rgba(255,255,255,.15)}
+nav a[aria-current=page]{background:#fff;color:var(--accent);font-weight:600}
+nav a:focus-visible{outline:2px solid #f59e0b;outline-offset:1px}
 main{max-width:1200px;margin:0 auto;padding:12px}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
 section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px}
@@ -80,20 +86,21 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 </style>
 </head>
 <body>
-<header>
-  <h1>Kapaplan</h1>
-  <p>Kapazitätsplanung für Projektmanager in der Kongress-Agentur</p>
-</header>
-<main>
-  <div class="toolbar">
-    <button type="button" data-act="example">Beispieldaten laden</button>
-    <button type="button" class="sec" data-act="export">Export als JSON-Datei</button>
-    <label class="btn sec">Import JSON-Datei<input type="file" id="importFile" accept=".json,application/json"></label>
-    <button type="button" class="danger" data-act="clear">Alles löschen</button>
+<header><div class="in">
+  <div>
+    <h1>Kapaplan</h1>
+    <p>Kapazitätsplanung für Projektmanager in der Kongress-Agentur</p>
   </div>
-
+  <nav aria-label="Seiten">
+    <a href="#planung" id="navPlan">Planung</a>
+    <a href="#einstellungen" id="navSettings">Einstellungen</a>
+  </nav>
+</div></header>
+<main>
+  <div id="viewSettings" hidden>
+  <div id="saveMsg"></div>
   <section>
-    <h2>1. Einstellungen</h2>
+    <h2>Allgemeine Einstellungen</h2>
     <div class="grid">
       <label style="grid-column:span 2"><span>Startmonat</span>
         <div class="pair">
@@ -127,7 +134,7 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
   </section>
 
   <section>
-    <h2>2. Projektmanager</h2>
+    <h2>Projektmanager</h2>
     <p class="sub">Bitte nur Kürzel verwenden, keine Klarnamen.</p>
     <div class="scroll"><table class="edit">
       <thead><tr><th>Kürzel</th><th>Kapazität (h/Monat)</th><th></th></tr></thead>
@@ -136,8 +143,20 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
     <p><button type="button" class="sec" data-act="addPM">+ Projektmanager</button></p>
   </section>
 
+  <p><button type="button" class="danger" data-act="resetSettings">Einstellungen auf Standard zurücksetzen</button></p>
+  </div>
+
+  <div id="viewPlan">
+  <div class="toolbar">
+    <button type="button" data-act="example">Beispieldaten laden</button>
+    <button type="button" class="sec" data-act="export">Export als JSON-Datei</button>
+    <label class="btn sec">Import JSON-Datei<input type="file" id="importFile" accept=".json,application/json"></label>
+    <button type="button" class="danger" data-act="clear">Projekte löschen</button>
+  </div>
+
   <section>
-    <h2>3. Projekte</h2>
+    <h2>Projekte</h2>
+    <p class="sub">Projektmanager, Projekttypen, Faktoren und Phasen werden auf der Seite <a href="#einstellungen">Einstellungen</a> gepflegt.</p>
     <div class="scroll"><table class="edit">
       <thead><tr><th>Projektname</th><th>PM</th><th>Projekttyp</th><th>Klasse</th><th>Hybrid</th><th>Eventdatum</th><th></th></tr></thead>
       <tbody id="projBody"></tbody>
@@ -166,8 +185,9 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
     <h2>Hinweise</h2>
     <div id="hints"></div>
   </section>
+  </div>
 </main>
-<footer>Es werden keine Daten gespeichert oder übertragen.</footer>
+<footer>Es werden keine Daten übertragen. Einstellungen und PM-Kürzel werden nur lokal in diesem Browser gespeichert, Projekte gar nicht.</footer>
 
 <script>
 (function(){
@@ -190,9 +210,11 @@ function defaults(){
       startMonth:now.getMonth()+1,startYear:now.getFullYear(),months:12,buffer:20,
       factors:{A:1.5,B:1,C:0.6},hybrid:100,
       types:[
-        {id:uid(),name:'Kleine Tagung (<150 TN)',hours:120},
-        {id:uid(),name:'Fachkongress (150–500 TN)',hours:400},
-        {id:uid(),name:'Großkongress (>500 TN)',hours:900}
+        {id:uid(),name:'Kultur-VA (Standard, wenig Kommunikation)',hours:120},
+        {id:uid(),name:'BV / MV (Tagesversammlung, 500–1.000 Pax)',hours:120},
+        {id:uid(),name:'Kongress mittel (800–1.000 Pax)',hours:400},
+        {id:uid(),name:'Kongress groß (1.000–5.000 Pax)',hours:900},
+        {id:uid(),name:'Corporate (viel Kommunikation, wie große VA)',hours:900}
       ],
       phases:[
         {id:uid(),name:'Konzeption',from:-12,to:-7,pct:20},
@@ -205,6 +227,32 @@ function defaults(){
     pms:[],projects:[]
   };
 }
+var KEY='kapaplan.einstellungen.v1',storeOk=true;
+function saveConfig(){
+  try{localStorage.setItem(KEY,JSON.stringify({settings:state.settings,pms:state.pms}));storeOk=true;}
+  catch(e){storeOk=false;}
+  renderSaveMsg();
+}
+function loadConfig(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(!raw)return defaults();
+    var d=JSON.parse(raw);
+    return sanitize({settings:d.settings,pms:d.pms,projects:[]});
+  }catch(e){return defaults();}
+}
+function renderSaveMsg(){
+  $('saveMsg').innerHTML=storeOk
+    ?'<p class="sub">Einstellungen und PM-Kürzel werden bei jeder Änderung automatisch in diesem Browser gespeichert und bleiben nach dem Neuladen erhalten. Sie werden nicht übertragen und gelten nur für diesen Browser.</p>'
+    :'<div class="warn" role="alert" style="margin:0 0 12px">Dieser Browser erlaubt kein lokales Speichern. Die Einstellungen gehen beim Neuladen verloren – bitte per JSON-Export sichern.</div>';
+}
+function route(){
+  var st=location.hash==='#einstellungen';
+  $('viewSettings').hidden=!st;$('viewPlan').hidden=st;
+  if(st){$('navSettings').setAttribute('aria-current','page');$('navPlan').removeAttribute('aria-current');}
+  else{$('navPlan').setAttribute('aria-current','page');$('navSettings').removeAttribute('aria-current');}
+}
+window.addEventListener('hashchange',route);
 var state=defaults();
 var selected=null; // {pm:id|'team', i:Spaltenindex}
 
@@ -399,6 +447,7 @@ function renderOutput(){
     }
   });
   var over=li.length;
+  if(Math.abs(sum-100)>0.001)li.push('<li>Die Phasenanteile ergeben '+fmt(sum,sum%1?1:0)+' % statt 100 % (siehe Einstellungen).</li>');
   c.projs.forEach(function(x){
     var nm=esc(x.proj.name||'(ohne Namen)');
     if(!x.pm)li.push('<li>Projekt „'+nm+'“ ist keinem PM zugewiesen und fehlt in der Heatmap.</li>');
@@ -427,6 +476,7 @@ function onEdit(el){
   if(!o)return;
   o[f]=v;
   if((k==='type'&&f==='name')||(k==='pm'&&f==='code'))refreshProjectSelects();
+  if(k!=='proj')saveConfig();
   renderOutput();
 }
 document.addEventListener('input',function(e){onEdit(e.target);});
@@ -468,14 +518,23 @@ document.addEventListener('click',function(e){
   }
   else if(act==='delProj'){remove(state.projects,id);renderProjects();}
   else if(act==='example'){
-    if((state.pms.length||state.projects.length)&&!confirm('Vorhandene Eingaben durch Beispieldaten ersetzen?'))return;
-    loadExample();return;
+    if((state.pms.length||state.projects.length)&&!confirm('Projektmanager und Projekte durch Beispieldaten ersetzen? Die übrigen Einstellungen bleiben erhalten.'))return;
+    loadExample();saveConfig();return;
   }
   else if(act==='clear'){
-    if(!confirm('Wirklich alle Eingaben löschen und die Einstellungen zurücksetzen?'))return;
-    state=defaults();selected=null;renderAll();return;
+    if(!confirm('Wirklich alle Projekte löschen? Einstellungen und Projektmanager bleiben erhalten.'))return;
+    state.projects=[];selected=null;renderAll();return;
+  }
+  else if(act==='resetSettings'){
+    if(!confirm('Einstellungen, Projekttypen, Phasen und Projektmanager auf die Standardwerte zurücksetzen? Projekte verlieren dabei PM und Projekttyp.'))return;
+    var keep=state.projects;
+    keep.forEach(function(p){p.pm='';p.type='';});
+    state=defaults();state.projects=keep;selected=null;
+    try{localStorage.removeItem(KEY);}catch(err){}
+    renderAll();return;
   }
   else if(act==='export'){exportJSON();return;}
+  if(act!=='addProj'&&act!=='delProj')saveConfig();
   renderOutput();
 });
 function focusLast(bodyId){
@@ -485,20 +544,20 @@ function focusLast(bodyId){
 
 /* ---------- Beispieldaten ---------- */
 function loadExample(){
-  state=defaults();selected=null;
-  var s=state.settings,t=s.types,start=s.startYear*12+s.startMonth-1;
+  selected=null;state.pms=[];state.projects=[];
+  var s=state.settings,t=s.types,start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
   var pm=function(code,cap){var p={id:uid(),code:code,cap:cap};state.pms.push(p);return p.id;};
   var ab=pm('AB',140),ck=pm('CK',140),ms=pm('MS',100);
-  var pr=function(name,pmId,type,c,hyb,off){
-    var ev=start+off;
-    state.projects.push({id:uid(),name:name,pm:pmId,type:type.id,cls:c,hybrid:hyb,month:ev%12+1,year:Math.floor(ev/12)});
+  var pr=function(name,pmId,ti,c,hyb,off){
+    var ev=start+off,type=t[ti]||t[0];
+    state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cls:c,hybrid:hyb,month:ev%12+1,year:Math.floor(ev/12)});
   };
-  pr('Jahrestagung Kardiologie',ab,t[2],'A',true,6);
-  pr('Symposium Pflege',ab,t[0],'B',false,4);
-  pr('Fachkongress Radiologie',ck,t[1],'B',true,5);
-  pr('Herbsttagung Verband',ck,t[1],'C',false,9);
-  pr('Workshop-Tagung Onkologie',ms,t[0],'A',false,3);
-  pr('Hausärztetag',ms,t[1],'B',false,8);
+  pr('Jahreskongress Kardiologie',ab,3,'A',true,6);
+  pr('Mitgliederversammlung Verband',ab,1,'B',false,4);
+  pr('Fachkongress Radiologie',ck,2,'B',true,5);
+  pr('Corporate Kick-off',ck,4,'C',false,9);
+  pr('Konzertreihe Sommer',ms,0,'A',false,3);
+  pr('Kongress Hausärztetag',ms,2,'B',false,8);
   renderAll();
 }
 
@@ -542,7 +601,7 @@ function importFile(input){
   if(!file)return;
   var r=new FileReader();
   r.onload=function(){
-    try{state=sanitize(JSON.parse(String(r.result)));selected=null;renderAll();}
+    try{state=sanitize(JSON.parse(String(r.result)));selected=null;renderAll();saveConfig();}
     catch(err){alert('Die Datei konnte nicht gelesen werden: '+err.message);}
     input.value='';
   };
@@ -550,7 +609,8 @@ function importFile(input){
   r.readAsText(file);
 }
 
-renderAll();
+state=loadConfig();
+renderSaveMsg();route();renderAll();
 })();
 </script>
 </body>
