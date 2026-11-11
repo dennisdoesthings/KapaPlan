@@ -15,16 +15,18 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 
 1. Seite **Einstellungen** (einmalig):
    - **Team**: Kürzel, Kapazität sowie Meetings & Grundlast pro Monat je PM, dazu der Puffer in %.
+   - **Urlaub und Abwesenheit**: Abwesenheitstage je PM und Monat, Jahr für Jahr.
    - **Größenklassen**: S, M, L, XL mit Basisstunden, dazu ein allgemeiner Zuschlag in % auf alle Projekte (Standard 0).
    - **Erweiterte Einstellungen** (eingeklappt): Aufwandsfaktoren, Grenzen des Gesamtfaktors und Monatsprofil je Komplexität.
    - Jede Änderung wird automatisch im Browser gespeichert.
 2. Seite **Planung**:
-   - Mit **+ Projekt** ein Projekt anlegen und aufklappen: Name, Eventdatum, Größenklasse, Komplexität und Projektstart wählen.
-   - Die Komplexität kann direkt gewählt oder über den Score aus zehn Kriterien (je 0 bis 2 Punkte) bestimmt werden.
+   - Mit **+ Projekt** ein Projekt anlegen und aufklappen: Name, Eventdatum, Lage im Monat (Anfang, Mitte, Ende), Größenklasse, Komplexität und Projektstart wählen.
+   - Die Komplexität kann direkt gewählt oder über den Score aus zehn Kriterien (je 0 bis 2 Punkte) bestimmt werden. Der Score wird erst übernommen, wenn alle zehn Kriterien gewählt sind.
    - Zutreffende **Aufwandsfaktoren** ankreuzen. 2 Punkte bei Ausstellung, Logistik, Sicherheit, Schnittstellen, Kundenstruktur oder Änderungsdynamik kreuzen den passenden Faktor automatisch an.
    - Unter **Projektmanager** steht der Hauptansprechpartner als erste Zeile mit seinem Anteil; mit **+ Weiterer PM** zusätzliche PM zuordnen und deren Rolle und Gewicht festlegen.
-   - Der Zeitraum der Auslastung wird direkt über der Heatmap eingestellt.
-3. Heatmap, Hinweise und Projektübersicht werden bei jeder Änderung sofort neu berechnet. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
+   - Die Projektliste lässt sich nach Eventdatum oder nach Name sortieren.
+   - Die Auslastung zeigt Kalenderjahre von Januar bis Dezember, wahlweise ein oder zwei Jahre; mit den Pfeilen wechselt man das Jahr. Beim Öffnen startet die Ansicht immer im aktuellen Jahr.
+3. Heatmap und Projektübersicht werden bei jeder Änderung sofort neu berechnet. Überlastungen zeigt die Heatmap in Rot; Hinweise erscheinen nur bei Eingabefehlern. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
 
 Zum Ausprobieren: **Beispieldaten laden**.
 
@@ -50,7 +52,8 @@ Zum Ausprobieren: **Beispieldaten laden**.
   - *Hauptansprechpartner*: trägt den Projektaufwand abzüglich der Themen-Anteile.
   - *Thema / Teilbereich*: übernimmt den eingestellten Prozentanteil des Aufwands in jedem Monat (Standard 20 %).
   - *Nur vor Ort (Aufbau, Durchführung, Abbau)*: zusätzliche Stunden im Eventmonat (Standard 30 h), sie kommen zum Projektaufwand hinzu.
-- **Verfügbare Kapazität** = (Kapazität − Meetings & Grundlast) × (1 − Puffer)
+- **Lage im Monat**: „Monatsanfang“ verschiebt das Monatsprofil um ein Drittel Monat nach vorn, „Monatsende“ um ein Drittel nach hinten.
+- **Verfügbare Kapazität** je Monat = (Kapazität − Meetings & Grundlast − Urlaub) × (1 − Puffer). Ein Urlaubstag zählt als ein Zwanzigstel der Monatskapazität.
 - **Auslastung %** = Veranstaltungsstunden / verfügbare Kapazität
 - Farben: Grün unter 80 %, Gelb 80–100 %, Rot über 100 %
 

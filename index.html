@@ -93,6 +93,16 @@ summary .pm{color:var(--muted);font-size:.88rem;white-space:nowrap}
 #advanced>summary h2,#advanced>summary .sub{margin:0}
 .period{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.9rem;color:var(--muted);margin-bottom:10px}
 .period select{width:auto}.period input{width:84px}
+.period strong{color:var(--text);min-width:92px;text-align:center}
+table.heat.wide td button{min-width:38px;padding:4px 0}
+table.heat.wide thead th{font-size:.7rem;padding:4px 0}
+table.heat.wide{border-spacing:1px}
+table.heat.wide td button b{font-size:.8rem}
+table.heat.wide td button span{font-size:.68rem}
+table.heat th.yb,table.heat td.yb{border-left:3px solid var(--card);box-shadow:-2px 0 0 var(--muted)}
+table.abs td{min-width:58px;padding:3px}
+table.abs td input{padding:6px 2px;text-align:center}
+table.abs th.pm,table.abs td.sum{white-space:nowrap;font-weight:600;color:var(--text);font-size:.9rem;padding:3px 8px}
 .warn{background:#fff4e5;border:1px solid #f0b45c;color:#7a4b00;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:.9rem}
 .ok{color:var(--g-t);font-size:.9rem;margin-top:8px}
 .empty{color:var(--muted);font-style:italic;padding:8px 0}
@@ -153,9 +163,20 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
     </table></div>
     <p><button type="button" class="sec" data-act="addPM">+ Projektmanager</button></p>
     <div class="grid one">
-      <label><span>Puffer für Urlaub, Krankheit, Unvorhergesehenes in %</span><input type="number" data-k="set" data-f="buffer" id="sBuffer" min="0" max="100"></label>
+      <label><span>Puffer für Krankheit und Unvorhergesehenes in %</span><input type="number" data-k="set" data-f="buffer" id="sBuffer" min="0" max="100"></label>
     </div>
-    <p class="sub" style="margin-top:6px">Verfügbar für Veranstaltungen = (Kapazität − Meetings &amp; Grundlast) × (1 − Puffer).</p>
+    <p class="sub" style="margin-top:6px">Verfügbar für Veranstaltungen = (Kapazität − Meetings &amp; Grundlast − Urlaub) × (1 − Puffer).</p>
+  </section>
+
+  <section>
+    <h2>Urlaub und Abwesenheit</h2>
+    <p class="sub">Abwesenheitstage je PM und Monat. Ein Tag zählt als ein Zwanzigstel der Monatskapazität (bei 160 h sind das 8 h).</p>
+    <div class="period">
+      <button type="button" class="sec" data-act="absPrev" aria-label="Ein Jahr zurück">◀</button>
+      <strong id="absLbl"></strong>
+      <button type="button" class="sec" data-act="absNext" aria-label="Ein Jahr weiter">▶</button>
+    </div>
+    <div class="scroll" id="absBox"></div>
   </section>
 
   <section>
@@ -215,6 +236,10 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
   <section>
     <h2>Projekte</h2>
     <p class="sub">Zum Bearbeiten ein Projekt aufklappen. Team und Größenklassen stehen unter <a href="#einstellungen">Einstellungen</a>.</p>
+    <div class="period">
+      <span>Sortierung</span>
+      <select data-k="set" data-f="sort" id="sSort" aria-label="Sortierung"><option value="date">nach Eventdatum</option><option value="name">nach Name</option></select>
+    </div>
     <div id="projList"></div>
     <p style="margin-bottom:0"><button type="button" data-act="addProj">+ Projekt</button></p>
   </section>
@@ -222,12 +247,11 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
   <section>
     <h2>Auslastung</h2>
     <div class="period">
-      <span>Zeitraum ab</span>
-      <select data-k="set" data-f="startMonth" id="sStartMonth" aria-label="Startmonat"></select>
-      <input type="number" data-k="set" data-f="startYear" id="sStartYear" min="2000" max="2100" aria-label="Startjahr">
-      <span>für</span>
-      <input type="number" data-k="set" data-f="months" id="sMonths" min="1" max="60" aria-label="Anzahl Monate">
-      <span>Monate</span>
+      <button type="button" class="sec" data-act="yearPrev" aria-label="Ein Jahr zurück">◀</button>
+      <strong id="viewLbl"></strong>
+      <button type="button" class="sec" data-act="yearNext" aria-label="Ein Jahr weiter">▶</button>
+      <select data-k="set" data-f="years" id="sYears" aria-label="Anzeigedauer"><option value="1">1 Jahr</option><option value="2">2 Jahre</option></select>
+      <button type="button" class="sec" data-act="yearNow">Aktuelles Jahr</button>
     </div>
     <div class="scroll" id="heat"></div>
     <div class="legend">
@@ -239,7 +263,7 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
     <div id="detail" hidden></div>
   </section>
 
-  <section>
+  <section id="hintsSec" hidden>
     <h2>Hinweise</h2>
     <div id="hints"></div>
   </section>
@@ -294,13 +318,12 @@ function fmtAuto(v){return fmt(v,v%1?1:0);}
 function sign(v){return (v>0?'+':(v<0?'−':''))+fmtAuto(Math.abs(v))+' %';}
 
 function defaults(){
-  var now=new Date();
   // crit = Index des Score-Kriteriums, das diesen Faktor bei 2 Punkten automatisch ankreuzt
   var ex=function(name,pct,crit){var x={id:uid(),name:name,pct:pct};if(crit>=0)x.crit=crit;return x;};
   var ph=function(name,from,to,e,m,k){return {id:uid(),name:name,from:from,to:to,pct:{e:e,m:m,k:k}};};
   return {
     settings:{
-      startMonth:now.getMonth()+1,startYear:now.getFullYear(),months:12,buffer:20,
+      years:2,sort:'date',buffer:10,
       facMin:0.7,facMax:1.5,overhead:0,
       extras:[
         ex('Kurzer Planungsvorlauf',20),
@@ -374,6 +397,11 @@ var state=defaults();
 var selected=null;   // {pm:id|'team', i:Spaltenindex}
 var openProj={};     // aufgeklappte Projekte
 var openScore={};    // aufgeklappte Score-Bereiche
+var viewYear=new Date().getFullYear(); // erstes angezeigtes Jahr der Auslastung (wird nicht gespeichert)
+var absYear=viewYear;               // angezeigtes Jahr der Urlaubstabelle
+var shown=[];                       // Projekte in der Reihenfolge der Anzeige
+function nowIdx(){var d=new Date();return d.getFullYear()*12+d.getMonth();}
+function mKey(y,m){return y+'-'+(m<10?'0':'')+m;}
 var dirty=false;     // Projekte seit dem letzten Export/Import geändert
 function setDirty(v){dirty=!!v&&state.projects.length>0;$('dirtyMsg').hidden=!dirty;}
 window.addEventListener('beforeunload',function(e){if(dirty){e.preventDefault();e.returnValue='';}});
@@ -381,15 +409,20 @@ window.addEventListener('beforeunload',function(e){if(dirty){e.preventDefault();
 /* ---------- Berechnung ---------- */
 function compute(){
   var s=state.settings;
-  var n=clamp(Math.round(s.months)||1,1,60);
-  var start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
+  var n=(s.years===1?1:2)*12;
+  var start=viewYear*12;
   var buf=clamp(s.buffer,0,100)/100;
   var fLo=Math.max(0,Math.min(s.facMin,s.facMax)),fHi=Math.max(0,s.facMin,s.facMax);
   var rows={},order=[];
   state.pms.forEach(function(p){
     // Verfügbar für Veranstaltungen = (Kapazität − Meetings & Grundlast) × (1 − Puffer)
-    var r={pm:p,cap:Math.max(0,p.cap-Math.max(0,p.meet||0))*(1-buf),hours:[],items:[]};
-    for(var i=0;i<n;i++){r.hours.push(0);r.items.push([]);}
+    // Verfügbar = (Kapazität − Meetings & Grundlast − Urlaub) × (1 − Puffer); ein Urlaubstag = Kapazität / 20
+    var r={pm:p,cap:[],hours:[],items:[]},cap=Math.max(0,p.cap),fix=Math.max(0,p.meet||0);
+    for(var i=0;i<n;i++){
+      var days=Math.max(0,p.off[mKey(viewYear+Math.floor(i/12),i%12+1)]||0);
+      r.cap.push(Math.max(0,cap-fix-days*cap/20)*(1-buf));
+      r.hours.push(0);r.items.push([]);
+    }
     rows[p.id]=r;order.push(r);
   });
   function add(row,i,p,h,phases,role){
@@ -403,7 +436,7 @@ function compute(){
     if(it.roles.indexOf(role)<0)it.roles.push(role);
   }
   var typeById={};s.types.forEach(function(t){typeById[t.id]=t;});
-  var projs=state.projects.map(function(p){
+  var projs=shown.map(function(p){
     var t=typeById[p.type];
     var xs=s.extras.filter(function(x){return p.flags.indexOf(x.id)>=0;});
     var raw=1+xs.reduce(function(a,x){return a+x.pct;},0)/100;
@@ -419,7 +452,8 @@ function compute(){
     }
     s.phases.forEach(function(ph){
       // Monat m belegt das Intervall [m, m+1); angeschnittene Monate zählen anteilig
-      var a=clamp(Math.min(ph.from,ph.to),-120,120),b=clamp(Math.max(ph.from,ph.to),-120,120)+1;
+      // Lage im Monat: Anfang verschiebt das Profil um ein Drittel Monat nach vorn, Ende nach hinten
+      var sh=p.pos/3,a=clamp(Math.min(ph.from,ph.to),-120,120)+sh,b=clamp(Math.max(ph.from,ph.to),-120,120)+1+sh;
       var all=base*ph.pct[p.cx]/100;
       if(!(all>0))return;
       for(var m=Math.floor(a);m<b;m++){
@@ -459,11 +493,11 @@ function compute(){
       mainShare:Math.max(0,1-tsum/100),main:rows[p.pm]?rows[p.pm].pm:null,members:members,
       total:total,inRange:inRange,over:tsum>100,ev:ev};
   });
-  var team={cap:0,hours:[],items:[]};
-  for(var i=0;i<n;i++){team.hours.push(0);team.items.push([]);}
+  var team={cap:[],hours:[],items:[]};
+  for(var i=0;i<n;i++){team.cap.push(0);team.hours.push(0);team.items.push([]);}
   order.forEach(function(r){
-    team.cap+=r.cap;
     for(var i=0;i<n;i++){
+      team.cap[i]+=r.cap[i];
       team.hours[i]+=r.hours[i];
       r.items[i].forEach(function(it){team.items[i].push({proj:it.proj,h:it.h,phases:it.phases,roles:it.roles,pm:r.pm});});
     }
@@ -496,9 +530,7 @@ function pctCells(a,o){
 }
 function renderSettings(){
   var s=state.settings;
-  $('sStartMonth').innerHTML=monthOpts(s.startMonth);
-  $('sStartYear').value=s.startYear;
-  $('sMonths').value=s.months;
+  $('sYears').value=s.years;$('sSort').value=s.sort;
   $('sBuffer').value=s.buffer;
   $('sFacMin').value=s.facMin;$('sFacMax').value=s.facMax;
   $('sOverhead').value=s.overhead;
@@ -529,10 +561,32 @@ function renderPMs(){
       '<td><input type="number" min="0" aria-label="Meetings und Grundlast in Stunden pro Monat" '+a+' data-f="meet" value="'+esc(p.meet)+'"></td>'+
       '<td class="c"><button type="button" class="del" data-act="delPM" data-id="'+esc(p.id)+'" aria-label="Projektmanager löschen">Löschen</button></td></tr>';
   }).join('')||'<tr><td colspan="4" class="empty">Noch keine Projektmanager angelegt.</td></tr>';
+  renderAbs();
+}
+function absSum(p){
+  var t=0;
+  for(var m=1;m<=12;m++)t+=p.off[mKey(absYear,m)]||0;
+  return fmtAuto(t)+' Tage';
+}
+function renderAbs(){
+  $('absLbl').textContent=absYear;
+  if(!state.pms.length){$('absBox').innerHTML='<div class="empty">Noch keine Projektmanager angelegt.</div>';return;}
+  $('absBox').innerHTML='<table class="edit abs"><thead><tr><th>PM</th>'+MONS.map(function(m){return '<th>'+m+'</th>';}).join('')+'<th>Summe</th></tr></thead><tbody>'+
+    state.pms.map(function(p){
+      var cells='';
+      for(var m=1;m<=12;m++){
+        var k=mKey(absYear,m);
+        cells+='<td><input type="number" min="0" max="31" step="0.5" aria-label="Abwesenheitstage '+esc(p.code)+' '+MON[m-1]+' '+absYear+'" data-k="off" data-id="'+esc(p.id)+'" data-m="'+k+'" value="'+(p.off[k]||'')+'"></td>';
+      }
+      return '<tr><th class="pm" scope="row">'+esc(p.code||'?')+'</th>'+cells+'<td class="sum">'+absSum(p)+'</td></tr>';
+    }).join('')+'</tbody></table>';
 }
 function renderProjects(){
   var s=state.settings;
-  $('projList').innerHTML=state.projects.map(function(p){
+  shown=state.projects.slice();
+  if(s.sort==='name')shown.sort(function(a,b){return a.name.localeCompare(b.name,'de',{sensitivity:'base'});});
+  else shown.sort(function(a,b){return (a.year*12+a.month+a.pos/3)-(b.year*12+b.month+b.pos/3);});
+  $('projList').innerHTML=shown.map(function(p){
     var a='data-k="proj" data-id="'+esc(p.id)+'"';
     var flags=s.extras.map(function(x){
       return '<label><input type="checkbox" data-k="flag" data-id="'+esc(p.id)+'" data-x="'+esc(x.id)+'"'+(p.flags.indexOf(x.id)>=0?' checked':'')+'><span>'+esc(x.name||'(ohne Bezeichnung)')+' <small>'+sign(x.pct)+'</small></span></label>';
@@ -540,7 +594,8 @@ function renderProjects(){
     var sc=p.scores||[];
     var crit=CRIT.map(function(c,i){
       return '<label><span>'+c[0]+'</span><select data-k="score" data-id="'+esc(p.id)+'" data-i="'+i+'">'+
-        c[1].map(function(o,v){return '<option value="'+v+'"'+((sc[i]||0)===v?' selected':'')+'>'+v+' – '+o+'</option>';}).join('')+'</select></label>';
+        '<option value="">– wählen –</option>'+
+        c[1].map(function(o,v){return '<option value="'+v+'"'+(sc[i]===v?' selected':'')+'>'+v+' – '+o+'</option>';}).join('')+'</select></label>';
     }).join('');
     var team=p.team.map(function(m){
       var b='data-k="member" data-id="'+esc(p.id)+'" data-m="'+esc(m.id)+'"';
@@ -555,13 +610,14 @@ function renderProjects(){
       '<label class="wide"><span>Projektname</span><input type="text" maxlength="120" '+a+' data-f="name" value="'+esc(p.name)+'"></label>'+
       '<label><span>Eventdatum</span><div class="pair"><select aria-label="Eventmonat" '+a+' data-f="month">'+monthOpts(p.month)+'</select>'+
       '<input type="number" min="2000" max="2100" aria-label="Eventjahr" '+a+' data-f="year" value="'+esc(p.year)+'"></div></label>'+
+      '<label><span>Lage im Monat</span><select '+a+' data-f="pos">'+[[-1,'Monatsanfang'],[0,'Monatsmitte'],[1,'Monatsende']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===p.pos?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>'+
       '<label><span>Größenklasse</span><select '+a+' data-f="type">'+opts(s.types,p.type,'name','– offen –')+'</select></label>'+
       '<label><span>Komplexität</span><select '+a+' data-f="cx">'+CX.map(function(c){return '<option value="'+c[0]+'"'+(c[0]===p.cx?' selected':'')+'>'+c[1]+'</option>';}).join('')+'</select></label>'+
       '<label><span>Projektstart</span><select '+a+' data-f="lead">'+LEADS.map(function(l){return '<option value="'+l[0]+'"'+(l[0]===p.lead?' selected':'')+'>'+l[1]+'</option>';}).join('')+'</select></label>'+
       '</div>'+
       '<details class="score" data-pid="'+esc(p.id)+'"'+(openScore[p.id]?' open':'')+'><summary>Komplexität über 10 Kriterien bestimmen <span class="scoreinfo"></span></summary>'+
       '<div class="grid">'+crit+'</div>'+
-      '<p class="sub" style="margin:8px 0 0">Der Score bestimmt die Komplexität. 2 Punkte bei Ausstellung, Logistik, Sicherheit, Schnittstellen, Kundenstruktur oder Änderungsdynamik kreuzen den passenden Aufwandsfaktor automatisch an.</p></details>'+
+      '<p class="sub" style="margin:8px 0 0">Sind alle zehn Kriterien gewählt, bestimmt der Score die Komplexität. 2 Punkte bei Ausstellung, Logistik, Sicherheit, Schnittstellen, Kundenstruktur oder Änderungsdynamik kreuzen den passenden Aufwandsfaktor automatisch an.</p></details>'+
       (flags?'<div class="tl" style="margin-top:12px">Aufwandsfaktoren <span class="facinfo"></span></div><div class="flags">'+flags+'</div>':'<span class="facinfo" hidden></span>')+
       '<div class="team"><div class="tl">Projektmanager</div>'+
       '<div class="mrow"><select aria-label="Hauptansprechpartner" '+a+' data-f="pm">'+opts(state.pms,p.pm,'code','– PM wählen –')+'</select>'+
@@ -591,6 +647,7 @@ function badSums(list){
 }
 function renderOutput(){
   var c=compute(),s=state.settings;
+  $('viewLbl').textContent=s.years===1?viewYear:viewYear+'–'+(viewYear+1);
 
   // Zusammenfassung und berechnete Angaben in den Projekten
   var kids=$('projList').children;
@@ -600,8 +657,10 @@ function renderOutput(){
     d.querySelector('.pn').textContent=p.name||'Neues Projekt';
     d.querySelector('.pm').innerHTML=mLabel(x.ev)+' · '+teamText(x,false)+' · '+fmt(x.total)+' h';
     d.querySelector('.mainshare').textContent=fmtAuto(x.mainShare*100)+' %';
-    var sum=scoreSum(p.scores);
-    d.querySelector('.scoreinfo').textContent=p.scores?'– Score '+sum+' von 20: '+scoreLabel(sum):'– optional';
+    var done=p.scores?p.scores.filter(function(v){return v!==null;}).length:0,sum=scoreSum(p.scores);
+    d.querySelector('.scoreinfo').textContent=!done?'– optional':(done<CRIT.length
+      ?'– '+done+' von '+CRIT.length+' Kriterien gewählt, Komplexität wird erst bei allen übernommen'
+      :'– Score '+sum+' von 20: '+scoreLabel(sum));
     d.querySelector('.facinfo').textContent='– Gesamtfaktor ×'+fmt(x.factor,2)+(x.capped?' (begrenzt auf '+fmt(Math.min(s.facMin,s.facMax),2)+' bis '+fmt(Math.max(s.facMin,s.facMax),2)+')':'')+(s.overhead?', allgemeiner Zuschlag '+sign(s.overhead):'');
   });
 
@@ -615,19 +674,19 @@ function renderOutput(){
   if(!c.rows.length){
     $('heat').innerHTML='<div class="empty">Bitte zuerst unter <a href="#einstellungen">Einstellungen</a> das Team anlegen.</div>';
   }else{
-    var h='<table class="heat"><thead><tr><th class="pm">PM</th>'+c.months.map(function(m){return '<th>'+mLabel(m)+'</th>';}).join('')+'</tr></thead><tbody>';
+    var h='<table class="heat'+(c.n>12?' wide':'')+'"><thead><tr><th class="pm">PM</th>'+c.months.map(function(m,j){return '<th'+(j&&m%12===0?' class="yb"':'')+'>'+mLabel(m)+'</th>';}).join('')+'</tr></thead><tbody>';
     var cell=function(key,i,hours,cap,label){
       var p=pctOf(hours,cap),sel=selected&&selected.pm===key&&selected.i===i;
-      return '<td class="'+cls(p)+(sel?' sel':'')+'"><button type="button" data-cell="'+esc(key)+'" data-i="'+i+'" aria-label="'+esc(label)+', '+mLabel(c.months[i],true)+': '+pctText(p)+', '+fmt(hours)+' Stunden">'+
+      return '<td class="'+cls(p)+(sel?' sel':'')+(i&&i%12===0?' yb':'')+'"><button type="button" data-cell="'+esc(key)+'" data-i="'+i+'" aria-label="'+esc(label)+', '+mLabel(c.months[i],true)+': '+pctText(p)+', '+fmt(hours)+' Stunden">'+
         '<b>'+pctText(p)+'</b><span>'+fmt(hours)+' h</span></button></td>';
     };
     c.rows.forEach(function(r){
       h+='<tr><th class="pm" scope="row">'+esc(r.pm.code||'?')+'</th>';
-      for(var i=0;i<c.n;i++)h+=cell(r.pm.id,i,r.hours[i],r.cap,r.pm.code);
+      for(var i=0;i<c.n;i++)h+=cell(r.pm.id,i,r.hours[i],r.cap[i],r.pm.code);
       h+='</tr>';
     });
     h+='<tr class="team"><th class="pm" scope="row">Team gesamt</th>';
-    for(var i=0;i<c.n;i++)h+=cell('team',i,c.team.hours[i],c.team.cap,'Team gesamt');
+    for(var i=0;i<c.n;i++)h+=cell('team',i,c.team.hours[i],c.team.cap[i],'Team gesamt');
     h+='</tr></tbody></table>';
     $('heat').innerHTML=h;
   }
@@ -639,7 +698,7 @@ function renderOutput(){
   else{
     var isTeam=selected.pm==='team',i=selected.i,items=row.items[i].slice().sort(function(a,b){return b.h-a.h;});
     var title=(isTeam?'Team gesamt':'PM '+esc(row.pm.code||'?'))+' – '+mLabel(c.months[i],true);
-    var html='<h3>'+title+'</h3><p class="sub">'+fmt(row.hours[i],1)+' h Veranstaltungsstunden bei '+fmt(row.cap,1)+' h verfügbarer Kapazität = '+pctText(pctOf(row.hours[i],row.cap))+'</p>';
+    var html='<h3>'+title+'</h3><p class="sub">'+fmt(row.hours[i],1)+' h Veranstaltungsstunden bei '+fmt(row.cap[i],1)+' h verfügbarer Kapazität = '+pctText(pctOf(row.hours[i],row.cap[i]))+'</p>';
     if(!items.length)html+='<div class="empty">Keine Projekte in diesem Monat.</div>';
     else{
       html+='<div class="scroll"><table><thead><tr><th>Projekt</th>'+(isTeam?'<th>PM</th>':'')+'<th>Rolle</th><th>Zeitraum</th><th class="num">Stunden</th></tr></thead><tbody>'+
@@ -654,7 +713,7 @@ function renderOutput(){
   if(!c.projs.length)$('overview').innerHTML='<div class="empty">Noch keine Projekte angelegt.</div>';
   else{
     var tot=0,totIn=0;
-    $('overview').innerHTML='<table><thead><tr><th>Projekt</th><th>PM</th><th>Größenklasse</th><th>Komplexität</th><th>Faktor</th><th>Event</th><th class="num">Gesamtaufwand</th><th class="num">davon im Zeitraum</th></tr></thead><tbody>'+
+    $('overview').innerHTML='<table><thead><tr><th>Projekt</th><th>PM</th><th>Größenklasse</th><th>Komplexität</th><th>Faktor</th><th>Event</th><th class="num">Gesamtaufwand</th><th class="num">davon im angezeigten Zeitraum</th></tr></thead><tbody>'+
       c.projs.map(function(x){
         var p=x.proj;tot+=x.total;totIn+=x.inRange;
         return '<tr><td>'+esc(p.name||'(ohne Namen)')+'</td><td>'+teamText(x,true)+'</td><td>'+(x.type?esc(x.type.name):'–')+'</td><td>'+CXL[p.cx]+(p.lead>0?', kurzfristig ('+p.lead+' Mon.)':'')+'</td>'+
@@ -663,15 +722,8 @@ function renderOutput(){
       '<tr><th colspan="6">Summe</th><th class="num">'+fmt(tot)+' h</th><th class="num">'+fmt(totIn)+' h</th></tr></tbody></table>';
   }
 
-  // Hinweise
+  // Hinweise (nur Eingabefehler; Überlastungen zeigt die Heatmap)
   var li=[];
-  c.rows.forEach(function(r){
-    for(var i=0;i<c.n;i++){
-      var p=pctOf(r.hours[i],r.cap);
-      if(p>100.0001)li.push('<li class="over"><strong>'+esc(r.pm.code||'?')+'</strong> – '+mLabel(c.months[i],true)+': '+pctText(p)+' ('+fmt(r.hours[i])+' h bei '+fmt(r.cap)+' h verfügbar)</li>');
-    }
-  });
-  var over=li.length;
   if(bad.length)li.push('<li>Diese Profil-Spalten ergeben nicht 100 %: '+esc(bad.join(', '))+' (siehe Einstellungen).</li>');
   c.projs.forEach(function(x){
     var nm=esc(x.proj.name||'(ohne Namen)');
@@ -681,14 +733,15 @@ function renderOutput(){
     if(ids.some(function(v,i){return ids.indexOf(v)!==i;}))li.push('<li>Projekt „'+nm+'“: Ein PM ist mehrfach eingetragen; seine Stunden werden addiert.</li>');
     if(x.over)li.push('<li>Projekt „'+nm+'“: Die Themen-Anteile der weiteren PM liegen über 100 % und wurden auf 100 % gekürzt.</li>');
   });
-  $('hints').innerHTML=(over?'':'<div class="ok" style="margin:0 0 6px">Kein PM liegt in einem Monat über 100 %.</div>')+(li.length?'<ul class="hints">'+li.join('')+'</ul>':'');
+  $('hints').innerHTML=li.length?'<ul class="hints">'+li.join('')+'</ul>':'';
+  $('hintsSec').hidden=!li.length;
 }
 function renderAll(){renderSettings();renderPMs();renderProjects();renderOutput();}
 
 /* ---------- Ereignisse ---------- */
 function find(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i];return null;}
 function remove(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id){list.splice(i,1);return;}}
-var NUMF={startMonth:1,startYear:1,months:1,buffer:1,facMin:1,facMax:1,overhead:1,hours:1,from:1,to:1,pct:1,cap:1,meet:1,month:1,year:1,lead:1,val:1};
+var NUMF={years:1,pos:1,buffer:1,facMin:1,facMax:1,overhead:1,hours:1,from:1,to:1,pct:1,cap:1,meet:1,month:1,year:1,lead:1,val:1};
 
 function onEdit(el){
   var k=el.dataset.k,f=el.dataset.f;
@@ -706,12 +759,15 @@ function onEdit(el){
   if(k==='score'){
     pj=find(state.projects,el.dataset.id);
     if(!pj)return;
-    if(!pj.scores)pj.scores=CRIT.map(function(){return 0;});
-    var ci=+el.dataset.i,cv=clamp(Math.round(num(el.value)),0,2),box=el.closest('details.proj');
+    if(!pj.scores)pj.scores=CRIT.map(function(){return null;});
+    var ci=+el.dataset.i,cv=el.value===''?null:clamp(Math.round(num(el.value)),0,2),box=el.closest('details.proj');
     pj.scores[ci]=cv;
-    pj.cx=cxFromScore(scoreSum(pj.scores));
-    var cxSel=box.querySelector('select[data-f="cx"]');
-    if(cxSel)cxSel.value=pj.cx;
+    // Die Komplexität wird erst übernommen, wenn alle Kriterien gewählt sind
+    if(pj.scores.every(function(v){return v!==null;})){
+      pj.cx=cxFromScore(scoreSum(pj.scores));
+      var cxSel=box.querySelector('select[data-f="cx"]');
+      if(cxSel)cxSel.value=pj.cx;
+    }
     // 2 Punkte kreuzen den passenden Aufwandsfaktor an, weniger Punkte nehmen ihn wieder heraus
     state.settings.extras.forEach(function(x){
       if(x.crit!==ci)return;
@@ -724,6 +780,15 @@ function onEdit(el){
     renderOutput();return;
   }
   var v=NUMF[f]?num(el.value):el.value;
+  if(k==='off'){
+    var pmo=find(state.pms,el.dataset.id),key=el.dataset.m;
+    if(!pmo||!/^\d{4}-\d{2}$/.test(key))return;
+    var dv=clamp(num(el.value),0,31);
+    if(dv>0)pmo.off[key]=dv;else delete pmo.off[key];
+    var sumCell=el.closest('tr').querySelector('.sum');
+    if(sumCell)sumCell.textContent=absSum(pmo);
+    saveConfig();renderOutput();return;
+  }
   if(k==='member'){
     pj=find(state.projects,el.dataset.id);
     var mb=pj&&find(pj.team,el.dataset.m);
@@ -743,10 +808,13 @@ function onEdit(el){
   else if(k==='proj')o=find(state.projects,el.dataset.id);
   if(!o)return;
   if(k==='proj'&&f==='cx'&&!CXL[v])return;
+  if(f==='years')v=v===1?1:2;
+  if(f==='sort')v=v==='name'?'name':'date';
+  if(f==='pos')v=clamp(Math.round(v),-1,1);
   if(el.dataset.c){if(CXL[el.dataset.c])o.pct[el.dataset.c]=v;}
   else o[f]=v;
   // Einstellungen liegen außerhalb der Projektliste: Liste neu aufbauen, damit Auswahllisten aktuell sind
-  if(k!=='proj'){saveConfig();if(k!=='set')renderProjects();}
+  if(k!=='proj'){saveConfig();if(k!=='set'||f==='sort')renderProjects();}
   renderOutput();
 }
 document.addEventListener('input',function(e){onEdit(e.target);});
@@ -775,6 +843,11 @@ document.addEventListener('click',function(e){
   var b=e.target.closest('[data-act]');
   if(!b)return;
   var act=b.dataset.act,id=b.dataset.id,s=state.settings,pj;
+  if(act==='yearPrev'||act==='yearNext'||act==='yearNow'){
+    viewYear=act==='yearNow'?new Date().getFullYear():clamp(viewYear+(act==='yearNext'?1:-1),2000,2100);
+    selected=null;renderOutput();return;
+  }
+  if(act==='absPrev'||act==='absNext'){absYear=clamp(absYear+(act==='absNext'?1:-1),2000,2100);renderAbs();return;}
   if(act==='addType'){s.types.push({id:uid(),name:'Neue Größenklasse',hours:100});renderSettings();renderProjects();focusLast('typesBody');}
   else if(act==='delType'){
     if(!usedOk(state.projects.filter(function(p){return p.type===id;}).length,'Diese Größenklasse'))return;
@@ -790,7 +863,7 @@ document.addEventListener('click',function(e){
     state.projects.forEach(function(p){var i=p.flags.indexOf(id);if(i>=0)p.flags.splice(i,1);});
     renderSettings();renderProjects();
   }
-  else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:160,meet:0});renderPMs();renderProjects();focusLast('pmsBody');}
+  else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:160,meet:0,off:{}});renderPMs();renderProjects();focusLast('pmsBody');}
   else if(act==='delPM'){
     if(!usedOk(state.projects.filter(function(p){return p.pm===id||p.team.some(function(m){return m.pm===id;});}).length,'Dieser PM'))return;
     remove(state.pms,id);
@@ -802,11 +875,11 @@ document.addEventListener('click',function(e){
     renderPMs();renderProjects();
   }
   else if(act==='addProj'){
-    var ev=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1+6;
-    pj={id:uid(),name:'',pm:state.pms[0]?state.pms[0].id:'',type:s.types[0]?s.types[0].id:'',cx:'m',scores:null,flags:[],lead:0,team:[],month:ev%12+1,year:Math.floor(ev/12)};
+    var ev=nowIdx()+6;
+    pj={pos:0,id:uid(),name:'',pm:state.pms[0]?state.pms[0].id:'',type:s.types[0]?s.types[0].id:'',cx:'m',scores:null,flags:[],lead:0,team:[],month:ev%12+1,year:Math.floor(ev/12)};
     state.projects.push(pj);openProj[pj.id]=true;
     renderProjects();
-    var last=$('projList').lastElementChild,inp=last&&last.querySelector('input');
+    var el=$('projList').children[shown.indexOf(pj)],inp=el&&el.querySelector('input');
     if(inp)inp.focus();
   }
   else if(act==='delProj'){
@@ -857,21 +930,24 @@ function focusLast(bodyId){
 /* ---------- Beispieldaten ---------- */
 function loadExample(){
   selected=null;openProj={};openScore={};state.pms=[];state.projects=[];
-  var s=state.settings,t=s.types,start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
-  var pm=function(code,cap,meet){var p={id:uid(),code:code,cap:cap,meet:meet};state.pms.push(p);return p.id;};
-  var ab=pm('AB',160,20),ck=pm('CK',160,20),ms=pm('MS',160,15);
+  var s=state.settings,t=s.types,start=nowIdx(),y1=Math.floor(start/12)+1;
+  viewYear=Math.floor(start/12);
+  var pm=function(code,cap,meet,off){var p={id:uid(),code:code,cap:cap,meet:meet,off:off};state.pms.push(p);return p.id;};
+  var o1={},o2={},o3={};
+  o1[mKey(y1,8)]=15;o1[mKey(y1,12)]=5;o2[mKey(y1,7)]=10;o2[mKey(y1,10)]=5;o3[mKey(y1,6)]=10;o3[mKey(y1,9)]=10;
+  var ab=pm('AB',160,20,o1),ck=pm('CK',160,20,o2),ms=pm('MS',160,15,o3);
   var pr=function(name,pmId,ti,cx,off,o){
     o=o||{};
     var ev=start+off,type=t[ti]||t[0];
-    state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cx:cx,scores:null,
+    state.projects.push({id:uid(),name:name,pm:pmId,type:type?type.id:'',cx:cx,scores:null,pos:o.pos||0,
       flags:(o.flags||[]).map(function(i){return s.extras[i]&&s.extras[i].id;}).filter(Boolean),lead:o.lead||0,
       team:(o.team||[]).map(function(m){return {id:uid(),pm:m[0],role:m[1],val:m[2]};}),month:ev%12+1,year:Math.floor(ev/12)});
   };
   pr('Jahreskongress Kardiologie',ab,3,'k',6,{flags:[1,2],team:[[ck,'thema',20],[ms,'ort',30]]});
-  pr('Mitgliederversammlung Verband',ab,1,'e',4,{flags:[8]});
+  pr('Mitgliederversammlung Verband',ab,1,'e',4,{flags:[8],pos:-1});
   pr('Fachkongress Radiologie',ck,2,'m',5,{lead:4,flags:[0]});
   pr('Corporate Kick-off',ck,2,'k',9,{flags:[4,5],team:[[ab,'ort',20]]});
-  pr('Konzertreihe Sommer',ms,0,'e',3,{flags:[11]});
+  pr('Konzertreihe Sommer',ms,0,'e',3,{flags:[11],pos:1});
   pr('Kongress Hausärztetag',ms,2,'m',8,{team:[[ck,'thema',30]]});
   renderAll();
 }
@@ -898,10 +974,8 @@ function sanitize(d){
     var x=n(v,0);return {e:x,m:x,k:x};
   };
   var out={settings:{
-    startMonth:clamp(Math.round(n(s.startMonth,ds.startMonth)),1,12),
-    startYear:Math.round(n(s.startYear,ds.startYear)),
-    months:clamp(Math.round(n(s.months,12)),1,60),
-    buffer:n(s.buffer,20),
+    years:n(s.years,2)===1?1:2,sort:s.sort==='name'?'name':'date',
+    buffer:n(s.buffer,10),
     facMin:Math.max(0,n(s.facMin,0.7)),facMax:Math.max(0,n(s.facMax,1.5)),overhead:n(s.overhead,0),
     extras:Array.isArray(s.extras)?arr(s.extras).map(function(x){
       var o={id:str(x.id,40)||uid(),name:str(x.name,60),pct:n(x.pct,0)},c=x.crit;
@@ -912,19 +986,24 @@ function sanitize(d){
     }):ds.extras,
     types:arr(s.types).map(function(t){return {id:str(t.id,40)||uid(),name:str(t.name,80),hours:n(t.hours,0)};}),
     phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:n(p.from,0),to:n(p.to,0),pct:pct3(p.pct)};})
-  },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,160),meet:n(p.meet,0)};}),projects:[]};
+  },pms:arr(d.pms).map(function(p){
+    var off={},src=p.off&&typeof p.off==='object'?p.off:{};
+    Object.keys(src).slice(0,240).forEach(function(k){var v=n(src[k],0);if(/^\d{4}-\d{2}$/.test(k)&&v>0)off[k]=Math.min(31,v);});
+    return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,160),meet:n(p.meet,0),off:off};
+  }),projects:[]};
   out.projects=arr(d.projects).map(function(p){
     var pm=str(p.pm,40),type=str(p.type,40),lead=Math.round(n(p.lead,0));
     return {id:str(p.id,40)||uid(),name:str(p.name,120),pm:has(out.pms,pm)?pm:'',type:has(out.settings.types,type)?type:'',
       cx:CXL[p.cx]?p.cx:'m',
-      scores:Array.isArray(p.scores)?CRIT.map(function(c,i){return clamp(Math.round(n(p.scores[i],0)),0,2);}):null,
+      scores:Array.isArray(p.scores)?CRIT.map(function(c,i){var v=p.scores[i];return typeof v==='number'&&isFinite(v)?clamp(Math.round(v),0,2):null;}):null,
+      pos:clamp(Math.round(n(p.pos,0)),-1,1),
       flags:(Array.isArray(p.flags)?p.flags:[]).map(function(x){return str(x,40);}).filter(function(x,i,l){return has(out.settings.extras,x)&&l.indexOf(x)===i;}),
       lead:lead>=3&&lead<=6?lead:0,
       team:arr(p.team).slice(0,10).map(function(m){
         var mp=str(m.pm,40),role=ROLES[m.role]?m.role:'thema';
         return {id:str(m.id,40)||uid(),pm:has(out.pms,mp)?mp:'',role:role,val:Math.max(0,n(m.val,ROLES[role].def))};
       }),
-      month:clamp(Math.round(n(p.month,1)),1,12),year:Math.round(n(p.year,ds.startYear))};
+      month:clamp(Math.round(n(p.month,1)),1,12),year:Math.round(n(p.year,new Date().getFullYear()))};
   });
   return out;
 }
