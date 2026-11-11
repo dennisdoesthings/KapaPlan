@@ -16,12 +16,12 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 1. Seite **Einstellungen** (einmalig):
    - **Team**: Kürzel, Kapazität sowie Meetings & Grundlast pro Monat je PM, dazu der Puffer in %.
    - **Größenklassen**: S, M, L, XL mit Basisstunden.
-   - **Erweiterte Einstellungen** (eingeklappt): Aufwandsfaktoren, Grenzen des Gesamtfaktors, Monatsprofil und Projektphasen je Komplexität.
+   - **Erweiterte Einstellungen** (eingeklappt): Aufwandsfaktoren, Grenzen des Gesamtfaktors und Monatsprofil je Komplexität.
    - Jede Änderung wird automatisch im Browser gespeichert.
 2. Seite **Planung**:
    - Mit **+ Projekt** ein Projekt anlegen und aufklappen: Name, Eventdatum, Größenklasse, Komplexität und Projektstart wählen.
    - Die Komplexität kann direkt gewählt oder über den Score aus zehn Kriterien (je 0 bis 2 Punkte) bestimmt werden.
-   - Zutreffende **Aufwandsfaktoren** ankreuzen.
+   - Zutreffende **Aufwandsfaktoren** ankreuzen. 2 Punkte bei Ausstellung, Logistik, Sicherheit, Schnittstellen, Kundenstruktur oder Änderungsdynamik kreuzen den passenden Faktor automatisch an.
    - Unter **Projektmanager** steht der Hauptansprechpartner als erste Zeile mit seinem Anteil; mit **+ Weiterer PM** zusätzliche PM zuordnen und deren Rolle und Gewicht festlegen.
    - Der Zeitraum der Auslastung wird direkt über der Heatmap eingestellt.
 3. Heatmap, Hinweise und Projektübersicht werden bei jeder Änderung sofort neu berechnet. Ein Klick auf eine Heatmap-Zelle zeigt die enthaltenen Projekte.
@@ -45,7 +45,6 @@ Zum Ausprobieren: **Beispieldaten laden**.
   | VA-Monat | 34 % | 27 % | 20 % |
   | Monat danach | 8 % | 6 % | 7 % |
 
-- **Projektphasen** (acht Phasen von Übernahme bis Abschluss): Die Stunden je Phase werden im Projekt nur zur Information angezeigt.
 - **Projektstart „Kurzfristig“** (3 bis 6 Monate vor dem Event): Der Gesamtaufwand bleibt gleich. Stunden, die vor dem Projektstart lägen, werden gleichmäßig auf die Monate vom Projektstart bis zum Monat vor dem Event verteilt.
 - **Mehrere PM je Projekt**:
   - *Hauptansprechpartner*: trägt den Projektaufwand abzüglich der Themen-Anteile.
