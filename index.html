@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'">
+<meta name="referrer" content="no-referrer">
+<title>Kapaplan – Kapazitätsplanung für Projektmanager</title>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#fff; --text:#1f2933; --muted:#667380; --line:#d9dee4;
+  --accent:#1f5fa8; --accent-d:#174a84; --danger:#b3261e;
+  --g:#d5f0d9; --g-t:#14532d; --y:#fff0b3; --y-t:#6b4e00; --r:#f9c9c5; --r-t:#7a1410;
+}
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header{background:var(--accent);color:#fff;padding:14px 16px}
+header h1{margin:0;font-size:1.25rem}
+header p{margin:2px 0 0;font-size:.85rem;opacity:.9}
+main{max-width:1200px;margin:0 auto;padding:12px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px}
+h2{margin:0 0 10px;font-size:1.1rem}
+h3{margin:16px 0 6px;font-size:.95rem}
+.sub{color:var(--muted);font-size:.85rem;margin:0 0 8px}
+button,.btn{font:inherit;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:6px;padding:8px 12px;min-height:38px;display:inline-flex;align-items:center}
+button:hover,.btn:hover{background:var(--accent-d)}
+button.sec,.btn.sec{background:#fff;color:var(--accent)}
+button.sec:hover,.btn.sec:hover{background:#eaf1f9}
+button.danger{background:#fff;color:var(--danger);border-color:var(--danger)}
+button.danger:hover{background:#fbeceb}
+button.del{background:#fff;color:var(--danger);border-color:var(--line);padding:4px 10px;min-height:34px}
+button:focus-visible,.btn:focus-within,input:focus-visible,select:focus-visible{outline:2px solid #f59e0b;outline-offset:1px}
+input,select{font:inherit;color:inherit;background:#fff;border:1px solid #b9c1ca;border-radius:5px;padding:6px 8px;min-height:36px;width:100%}
+input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;vertical-align:middle}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.grid label{display:block;font-size:.85rem;color:var(--muted)}
+.grid label span{display:block;margin-bottom:2px}
+.pair{display:flex;gap:6px}
+.pair select{flex:1 1 60%}.pair input{flex:1 1 40%;min-width:74px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%}
+th,td{padding:5px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:.8rem;color:var(--muted);font-weight:600;white-space:nowrap}
+td.num,th.num{text-align:right}
+table.edit td{min-width:86px}
+table.edit td.c{min-width:0;width:1%;text-align:center;white-space:nowrap}
+table.edit td.w{min-width:170px}
+table.edit td.d{min-width:190px}
+.warn{background:#fff4e5;border:1px solid #f0b45c;color:#7a4b00;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:.9rem}
+.ok{color:var(--g-t);font-size:.9rem;margin-top:8px}
+.empty{color:var(--muted);font-style:italic;padding:8px 0}
+table.heat{border-collapse:separate;border-spacing:2px}
+table.heat th,table.heat td{border:0;padding:0;text-align:center}
+table.heat thead th{padding:4px 2px}
+table.heat th.pm{position:sticky;left:0;background:var(--card);text-align:left;padding:4px 8px 4px 2px;color:var(--text);font-size:.9rem;z-index:1}
+table.heat td button{width:100%;min-width:62px;min-height:46px;display:block;border:2px solid transparent;border-radius:5px;padding:4px 2px;color:inherit;background:inherit;line-height:1.2}
+table.heat td button b{display:block;font-size:.9rem}
+table.heat td button span{display:block;font-size:.75rem;opacity:.85}
+table.heat td button:hover{border-color:rgba(0,0,0,.35);background:inherit}
+table.heat td.sel button{border-color:var(--text)}
+td.g{background:var(--g);color:var(--g-t)} td.y{background:var(--y);color:var(--y-t)} td.r{background:var(--r);color:var(--r-t)}
+td.g,td.y,td.r{border-radius:5px}
+tr.team th.pm,tr.team td{border-top:2px solid var(--text)}
+tr.team td button b{font-weight:800}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.82rem;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+#detail{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:10px;background:#fafbfc}
+#detail h3{margin-top:0}
+ul.hints{margin:0;padding-left:20px}
+ul.hints li{margin:3px 0}
+ul.hints li.over{color:var(--r-t)}
+footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);font-size:.85rem;text-align:center}
+@media (max-width:600px){
+  main{padding:8px} section{padding:10px}
+  .toolbar button,.toolbar .btn{flex:1 1 46%;justify-content:center}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kapaplan</h1>
+  <p>Kapazitätsplanung für Projektmanager in der Kongress-Agentur</p>
+</header>
+<main>
+  <div class="toolbar">
+    <button type="button" data-act="example">Beispieldaten laden</button>
+    <button type="button" class="sec" data-act="export">Export als JSON-Datei</button>
+    <label class="btn sec">Import JSON-Datei<input type="file" id="importFile" accept=".json,application/json"></label>
+    <button type="button" class="danger" data-act="clear">Alles löschen</button>
+  </div>
+
+  <section>
+    <h2>1. Einstellungen</h2>
+    <div class="grid">
+      <label style="grid-column:span 2"><span>Startmonat</span>
+        <div class="pair">
+          <select data-k="set" data-f="startMonth" id="sStartMonth" aria-label="Startmonat"></select>
+          <input type="number" data-k="set" data-f="startYear" id="sStartYear" min="2000" max="2100" aria-label="Startjahr">
+        </div>
+      </label>
+      <label><span>Anzahl Monate</span><input type="number" data-k="set" data-f="months" id="sMonths" min="1" max="60"></label>
+      <label><span>Pufferquote in %</span><input type="number" data-k="set" data-f="buffer" id="sBuffer" min="0" max="100"></label>
+      <label><span>Faktor Klasse A</span><input type="number" data-k="fac" data-f="A" id="sFacA" min="0" step="0.1"></label>
+      <label><span>Faktor Klasse B</span><input type="number" data-k="fac" data-f="B" id="sFacB" min="0" step="0.1"></label>
+      <label><span>Faktor Klasse C</span><input type="number" data-k="fac" data-f="C" id="sFacC" min="0" step="0.1"></label>
+      <label><span>Hybrid-Zuschlag in h</span><input type="number" data-k="set" data-f="hybrid" id="sHybrid" min="0"></label>
+    </div>
+    <p class="sub" style="margin-top:8px">Verplanbare Kapazität = Kapazität × (1 − Puffer)</p>
+
+    <h3>Projekttypen</h3>
+    <div class="scroll"><table class="edit">
+      <thead><tr><th>Bezeichnung</th><th>Basisstunden</th><th></th></tr></thead>
+      <tbody id="typesBody"></tbody>
+    </table></div>
+    <p><button type="button" class="sec" data-act="addType">+ Projekttyp</button></p>
+
+    <h3>Phasenverteilung (Monate relativ zum Eventmonat, 0 = Eventmonat)</h3>
+    <div class="scroll"><table class="edit">
+      <thead><tr><th>Phase</th><th>von Monat</th><th>bis Monat</th><th>Anteil %</th><th></th></tr></thead>
+      <tbody id="phasesBody"></tbody>
+    </table></div>
+    <p><button type="button" class="sec" data-act="addPhase">+ Phase</button></p>
+    <div id="phaseMsg"></div>
+  </section>
+
+  <section>
+    <h2>2. Projektmanager</h2>
+    <p class="sub">Bitte nur Kürzel verwenden, keine Klarnamen.</p>
+    <div class="scroll"><table class="edit">
+      <thead><tr><th>Kürzel</th><th>Kapazität (h/Monat)</th><th></th></tr></thead>
+      <tbody id="pmsBody"></tbody>
+    </table></div>
+    <p><button type="button" class="sec" data-act="addPM">+ Projektmanager</button></p>
+  </section>
+
+  <section>
+    <h2>3. Projekte</h2>
+    <div class="scroll"><table class="edit">
+      <thead><tr><th>Projektname</th><th>PM</th><th>Projekttyp</th><th>Klasse</th><th>Hybrid</th><th>Eventdatum</th><th></th></tr></thead>
+      <tbody id="projBody"></tbody>
+    </table></div>
+    <p><button type="button" class="sec" data-act="addProj">+ Projekt</button></p>
+  </section>
+
+  <section>
+    <h2>Auslastung (Heatmap)</h2>
+    <p class="sub">Zelle = Auslastung in % und Stunden. Klick auf eine Zelle zeigt die enthaltenen Projekte.</p>
+    <div class="scroll" id="heat"></div>
+    <div class="legend">
+      <span><i style="background:var(--g)"></i>unter 80 %</span>
+      <span><i style="background:var(--y)"></i>80–100 %</span>
+      <span><i style="background:var(--r)"></i>über 100 %</span>
+    </div>
+    <div id="detail" hidden></div>
+  </section>
+
+  <section>
+    <h2>Projektübersicht</h2>
+    <div class="scroll" id="overview"></div>
+  </section>
+
+  <section>
+    <h2>Hinweise</h2>
+    <div id="hints"></div>
+  </section>
+</main>
+<footer>Es werden keine Daten gespeichert oder übertragen.</footer>
+
+<script>
+(function(){
+'use strict';
+
+var MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+var MONS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+var seq=0;
+function uid(){return 'i'+(++seq)+Math.random().toString(36).slice(2,7);}
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function num(v){var n=parseFloat(String(v).replace(',','.'));return isFinite(n)?n:0;}
+function clamp(v,a,b){return Math.min(b,Math.max(a,v));}
+function fmt(v,d){return v.toLocaleString('de-DE',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
+
+function defaults(){
+  var now=new Date();
+  return {
+    settings:{
+      startMonth:now.getMonth()+1,startYear:now.getFullYear(),months:12,buffer:20,
+      factors:{A:1.5,B:1,C:0.6},hybrid:100,
+      types:[
+        {id:uid(),name:'Kleine Tagung (<150 TN)',hours:120},
+        {id:uid(),name:'Fachkongress (150–500 TN)',hours:400},
+        {id:uid(),name:'Großkongress (>500 TN)',hours:900}
+      ],
+      phases:[
+        {id:uid(),name:'Konzeption',from:-12,to:-7,pct:20},
+        {id:uid(),name:'Planung',from:-6,to:-3,pct:35},
+        {id:uid(),name:'Heiße Phase',from:-2,to:-1,pct:30},
+        {id:uid(),name:'Durchführung',from:0,to:0,pct:10},
+        {id:uid(),name:'Nachbereitung',from:1,to:1,pct:5}
+      ]
+    },
+    pms:[],projects:[]
+  };
+}
+var state=defaults();
+var selected=null; // {pm:id|'team', i:Spaltenindex}
+
+/* ---------- Berechnung ---------- */
+function compute(){
+  var s=state.settings;
+  var n=clamp(Math.round(s.months)||1,1,60);
+  var start=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1;
+  var buf=clamp(s.buffer,0,100)/100;
+  var rows={},order=[];
+  state.pms.forEach(function(p){
+    var r={pm:p,cap:Math.max(0,p.cap)*(1-buf),hours:[],items:[]};
+    for(var i=0;i<n;i++){r.hours.push(0);r.items.push([]);}
+    rows[p.id]=r;order.push(r);
+  });
+  var typeById={};s.types.forEach(function(t){typeById[t.id]=t;});
+  var projs=state.projects.map(function(p){
+    var t=typeById[p.type];
+    var base=(t?Math.max(0,t.hours):0)+(p.hybrid?Math.max(0,s.hybrid):0);
+    var total=base*Math.max(0,s.factors[p.cls]||0);
+    var ev=Math.round(p.year)*12+clamp(Math.round(p.month),1,12)-1;
+    var inRange=0,row=rows[p.pm];
+    s.phases.forEach(function(ph){
+      var a=clamp(Math.round(Math.min(ph.from,ph.to)),-120,120),b=clamp(Math.round(Math.max(ph.from,ph.to)),-120,120);
+      var h=total*ph.pct/100/(b-a+1);
+      if(!h)return;
+      for(var m=a;m<=b;m++){
+        var i=ev+m-start;
+        if(i<0||i>=n)continue;
+        inRange+=h;
+        if(row){
+          row.hours[i]+=h;
+          var it=null;
+          for(var k=0;k<row.items[i].length;k++)if(row.items[i][k].proj===p){it=row.items[i][k];break;}
+          if(it){it.h+=h;it.phases.push(ph.name);}
+          else row.items[i].push({proj:p,h:h,phases:[ph.name]});
+        }
+      }
+    });
+    return {proj:p,type:t,pm:row?row.pm:null,total:total,inRange:inRange};
+  });
+  var team={cap:0,hours:[],items:[]};
+  for(var i=0;i<n;i++){team.hours.push(0);team.items.push([]);}
+  order.forEach(function(r){
+    team.cap+=r.cap;
+    for(var i=0;i<n;i++){
+      team.hours[i]+=r.hours[i];
+      r.items[i].forEach(function(it){team.items[i].push({proj:it.proj,h:it.h,phases:it.phases,pm:r.pm});});
+    }
+  });
+  var months=[];
+  for(var j=0;j<n;j++)months.push(start+j);
+  return {n:n,months:months,rows:order,byId:rows,team:team,projs:projs};
+}
+function mLabel(idx,long){var y=Math.floor(idx/12),m=((idx%12)+12)%12;return long?MON[m]+' '+y:MONS[m]+' '+String(y).slice(-2);}
+function pctOf(h,cap){return cap>0?h/cap*100:(h>0?Infinity:0);}
+function cls(p){return p>100.0001?'r':(p>=79.9999?'y':'g');}
+function pctText(p){return isFinite(p)?fmt(p)+' %':'∞';}
+
+/* ---------- Eingabe-Rendering ---------- */
+function monthOpts(sel){
+  return MON.map(function(m,i){return '<option value="'+(i+1)+'"'+(i+1===sel?' selected':'')+'>'+m+'</option>';}).join('');
+}
+function opts(list,sel,labelKey,emptyLabel){
+  var found=false;
+  var h=list.map(function(o){
+    var s=o.id===sel;if(s)found=true;
+    return '<option value="'+esc(o.id)+'"'+(s?' selected':'')+'>'+esc(o[labelKey]||'(ohne Bezeichnung)')+'</option>';
+  }).join('');
+  return '<option value=""'+(found?'':' selected')+'>'+emptyLabel+'</option>'+h;
+}
+function renderSettings(){
+  var s=state.settings;
+  $('sStartMonth').innerHTML=monthOpts(s.startMonth);
+  $('sStartYear').value=s.startYear;
+  $('sMonths').value=s.months;
+  $('sBuffer').value=s.buffer;
+  $('sFacA').value=s.factors.A;$('sFacB').value=s.factors.B;$('sFacC').value=s.factors.C;
+  $('sHybrid').value=s.hybrid;
+  $('typesBody').innerHTML=s.types.map(function(t){
+    return '<tr><td class="w"><input type="text" maxlength="80" aria-label="Bezeichnung" data-k="type" data-id="'+esc(t.id)+'" data-f="name" value="'+esc(t.name)+'"></td>'+
+      '<td><input type="number" min="0" aria-label="Basisstunden" data-k="type" data-id="'+esc(t.id)+'" data-f="hours" value="'+esc(t.hours)+'"></td>'+
+      '<td class="c"><button type="button" class="del" data-act="delType" data-id="'+esc(t.id)+'" aria-label="Projekttyp löschen">Löschen</button></td></tr>';
+  }).join('')||'<tr><td colspan="3" class="empty">Keine Projekttypen angelegt.</td></tr>';
+  $('phasesBody').innerHTML=s.phases.map(function(p){
+    var a='data-k="phase" data-id="'+esc(p.id)+'"';
+    return '<tr><td class="w"><input type="text" maxlength="80" aria-label="Phase" '+a+' data-f="name" value="'+esc(p.name)+'"></td>'+
+      '<td><input type="number" step="1" aria-label="von Monat" '+a+' data-f="from" value="'+esc(p.from)+'"></td>'+
+      '<td><input type="number" step="1" aria-label="bis Monat" '+a+' data-f="to" value="'+esc(p.to)+'"></td>'+
+      '<td><input type="number" min="0" max="100" aria-label="Anteil in Prozent" '+a+' data-f="pct" value="'+esc(p.pct)+'"></td>'+
+      '<td class="c"><button type="button" class="del" data-act="delPhase" data-id="'+esc(p.id)+'" aria-label="Phase löschen">Löschen</button></td></tr>';
+  }).join('')||'<tr><td colspan="5" class="empty">Keine Phasen angelegt.</td></tr>';
+}
+function renderPMs(){
+  $('pmsBody').innerHTML=state.pms.map(function(p){
+    return '<tr><td><input type="text" maxlength="12" aria-label="Kürzel" data-k="pm" data-id="'+esc(p.id)+'" data-f="code" value="'+esc(p.code)+'"></td>'+
+      '<td><input type="number" min="0" aria-label="Kapazität in Stunden pro Monat" data-k="pm" data-id="'+esc(p.id)+'" data-f="cap" value="'+esc(p.cap)+'"></td>'+
+      '<td class="c"><button type="button" class="del" data-act="delPM" data-id="'+esc(p.id)+'" aria-label="Projektmanager löschen">Löschen</button></td></tr>';
+  }).join('')||'<tr><td colspan="3" class="empty">Noch keine Projektmanager angelegt.</td></tr>';
+}
+function renderProjects(){
+  $('projBody').innerHTML=state.projects.map(function(p){
+    var a='data-k="proj" data-id="'+esc(p.id)+'"';
+    return '<tr><td class="w"><input type="text" maxlength="120" aria-label="Projektname" '+a+' data-f="name" value="'+esc(p.name)+'"></td>'+
+      '<td><select aria-label="PM" '+a+' data-f="pm">'+opts(state.pms,p.pm,'code','– offen –')+'</select></td>'+
+      '<td class="w"><select aria-label="Projekttyp" '+a+' data-f="type">'+opts(state.settings.types,p.type,'name','– offen –')+'</select></td>'+
+      '<td><select aria-label="Kundenklasse" '+a+' data-f="cls">'+['A','B','C'].map(function(c){return '<option'+(c===p.cls?' selected':'')+'>'+c+'</option>';}).join('')+'</select></td>'+
+      '<td class="c"><input type="checkbox" aria-label="Hybrid" '+a+' data-f="hybrid"'+(p.hybrid?' checked':'')+'></td>'+
+      '<td class="d"><div class="pair"><select aria-label="Eventmonat" '+a+' data-f="month">'+monthOpts(p.month)+'</select>'+
+      '<input type="number" min="2000" max="2100" aria-label="Eventjahr" '+a+' data-f="year" value="'+esc(p.year)+'"></div></td>'+
+      '<td class="c"><button type="button" class="del" data-act="delProj" data-id="'+esc(p.id)+'" aria-label="Projekt löschen">Löschen</button></td></tr>';
+  }).join('')||'<tr><td colspan="7" class="empty">Noch keine Projekte angelegt.</td></tr>';
+}
+// Dropdowns der Projekttabelle aktualisieren, ohne den Fokus zu verlieren
+function refreshProjectSelects(){
+  var sels=$('projBody').querySelectorAll('select[data-f="pm"],select[data-f="type"]');
+  for(var i=0;i<sels.length;i++){
+    var el=sels[i],p=find(state.projects,el.dataset.id);
+    if(!p)continue;
+    el.innerHTML=el.dataset.f==='pm'?opts(state.pms,p.pm,'code','– offen –'):opts(state.settings.types,p.type,'name','– offen –');
+  }
+}
+
+/* ---------- Ausgabe-Rendering ---------- */
+function renderOutput(){
+  var c=compute(),s=state.settings;
+
+  // Phasensumme
+  var sum=s.phases.reduce(function(a,p){return a+p.pct;},0);
+  $('phaseMsg').innerHTML=Math.abs(sum-100)>0.001
+    ?'<div class="warn" role="alert">Warnung: Die Phasenanteile ergeben '+fmt(sum,sum%1?1:0)+' % statt 100 %.</div>'
+    :'<div class="ok">Summe der Phasenanteile: 100 %</div>';
+
+  // Heatmap
+  if(!c.rows.length){
+    $('heat').innerHTML='<div class="empty">Bitte zuerst Projektmanager anlegen.</div>';
+  }else{
+    var h='<table class="heat"><thead><tr><th class="pm">PM</th>'+c.months.map(function(m){return '<th>'+mLabel(m)+'</th>';}).join('')+'</tr></thead><tbody>';
+    var cell=function(key,i,hours,cap,label){
+      var p=pctOf(hours,cap),sel=selected&&selected.pm===key&&selected.i===i;
+      return '<td class="'+cls(p)+(sel?' sel':'')+'"><button type="button" data-cell="'+esc(key)+'" data-i="'+i+'" aria-label="'+esc(label)+', '+mLabel(c.months[i],true)+': '+pctText(p)+', '+fmt(hours)+' Stunden">'+
+        '<b>'+pctText(p)+'</b><span>'+fmt(hours)+' h</span></button></td>';
+    };
+    c.rows.forEach(function(r){
+      h+='<tr><th class="pm" scope="row">'+esc(r.pm.code||'?')+'</th>';
+      for(var i=0;i<c.n;i++)h+=cell(r.pm.id,i,r.hours[i],r.cap,r.pm.code);
+      h+='</tr>';
+    });
+    h+='<tr class="team"><th class="pm" scope="row">Team gesamt</th>';
+    for(var i=0;i<c.n;i++)h+=cell('team',i,c.team.hours[i],c.team.cap,'Team gesamt');
+    h+='</tr></tbody></table>';
+    $('heat').innerHTML=h;
+  }
+
+  // Detail zur gewählten Zelle
+  var d=$('detail');
+  var row=selected?(selected.pm==='team'?c.team:c.byId[selected.pm]):null;
+  if(!row||selected.i>=c.n||!c.rows.length){selected=null;d.hidden=true;d.innerHTML='';}
+  else{
+    var isTeam=selected.pm==='team',i=selected.i,items=row.items[i].slice().sort(function(a,b){return b.h-a.h;});
+    var title=(isTeam?'Team gesamt':'PM '+esc(row.pm.code||'?'))+' – '+mLabel(c.months[i],true);
+    var html='<h3>'+title+'</h3><p class="sub">'+fmt(row.hours[i],1)+' h von '+fmt(row.cap,1)+' h verplanbarer Kapazität = '+pctText(pctOf(row.hours[i],row.cap))+'</p>';
+    if(!items.length)html+='<div class="empty">Keine Projekte in diesem Monat.</div>';
+    else{
+      html+='<div class="scroll"><table><thead><tr><th>Projekt</th>'+(isTeam?'<th>PM</th>':'')+'<th>Phase</th><th class="num">Stunden</th></tr></thead><tbody>'+
+        items.map(function(it){
+          return '<tr><td>'+esc(it.proj.name||'(ohne Namen)')+'</td>'+(isTeam?'<td>'+esc(it.pm.code)+'</td>':'')+'<td>'+esc(it.phases.join(', '))+'</td><td class="num">'+fmt(it.h,1)+' h</td></tr>';
+        }).join('')+'</tbody></table></div>';
+    }
+    d.innerHTML=html;d.hidden=false;
+  }
+
+  // Projektübersicht
+  if(!c.projs.length)$('overview').innerHTML='<div class="empty">Noch keine Projekte angelegt.</div>';
+  else{
+    var tot=0,totIn=0;
+    $('overview').innerHTML='<table><thead><tr><th>Projekt</th><th>PM</th><th>Klasse</th><th>Typ</th><th>Event</th><th class="num">Gesamtaufwand</th><th class="num">davon im Zeitraum</th></tr></thead><tbody>'+
+      c.projs.map(function(x){
+        var p=x.proj;tot+=x.total;totIn+=x.inRange;
+        return '<tr><td>'+esc(p.name||'(ohne Namen)')+'</td><td>'+(x.pm?esc(x.pm.code):'–')+'</td><td>'+esc(p.cls)+'</td><td>'+(x.type?esc(x.type.name):'–')+(p.hybrid?' + Hybrid':'')+'</td>'+
+          '<td>'+mLabel(Math.round(p.year)*12+clamp(Math.round(p.month),1,12)-1)+'</td><td class="num">'+fmt(x.total)+' h</td><td class="num">'+fmt(x.inRange)+' h</td></tr>';
+      }).join('')+
+      '<tr><th colspan="5">Summe</th><th class="num">'+fmt(tot)+' h</th><th class="num">'+fmt(totIn)+' h</th></tr></tbody></table>';
+  }
+
+  // Hinweise
+  var li=[];
+  c.rows.forEach(function(r){
+    for(var i=0;i<c.n;i++){
+      var p=pctOf(r.hours[i],r.cap);
+      if(p>100.0001)li.push('<li class="over"><strong>'+esc(r.pm.code||'?')+'</strong> – '+mLabel(c.months[i],true)+': '+pctText(p)+' ('+fmt(r.hours[i])+' h bei '+fmt(r.cap)+' h verplanbar)</li>');
+    }
+  });
+  var over=li.length;
+  c.projs.forEach(function(x){
+    var nm=esc(x.proj.name||'(ohne Namen)');
+    if(!x.pm)li.push('<li>Projekt „'+nm+'“ ist keinem PM zugewiesen und fehlt in der Heatmap.</li>');
+    if(!x.type)li.push('<li>Projekt „'+nm+'“ hat keinen Projekttyp.</li>');
+  });
+  $('hints').innerHTML=(over?'':'<div class="ok" style="margin:0 0 6px">Kein PM liegt in einem Monat über 100 %.</div>')+(li.length?'<ul class="hints">'+li.join('')+'</ul>':'');
+}
+function renderAll(){renderSettings();renderPMs();renderProjects();renderOutput();}
+
+/* ---------- Ereignisse ---------- */
+function find(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id)return list[i];return null;}
+function remove(list,id){for(var i=0;i<list.length;i++)if(list[i].id===id){list.splice(i,1);return;}}
+var NUMF={startMonth:1,startYear:1,months:1,buffer:1,hybrid:1,hours:1,from:1,to:1,pct:1,cap:1,month:1,year:1};
+
+function onEdit(el){
+  var k=el.dataset.k,f=el.dataset.f;
+  if(!k)return;
+  var v=el.type==='checkbox'?el.checked:(NUMF[f]||k==='fac'?num(el.value):el.value);
+  var s=state.settings,o=null;
+  if(k==='set')o=s;
+  else if(k==='fac')o=s.factors;
+  else if(k==='type')o=find(s.types,el.dataset.id);
+  else if(k==='phase')o=find(s.phases,el.dataset.id);
+  else if(k==='pm')o=find(state.pms,el.dataset.id);
+  else if(k==='proj')o=find(state.projects,el.dataset.id);
+  if(!o)return;
+  o[f]=v;
+  if((k==='type'&&f==='name')||(k==='pm'&&f==='code'))refreshProjectSelects();
+  renderOutput();
+}
+document.addEventListener('input',function(e){onEdit(e.target);});
+document.addEventListener('change',function(e){
+  if(e.target.id==='importFile'){importFile(e.target);return;}
+  onEdit(e.target);
+});
+
+document.addEventListener('click',function(e){
+  var cellBtn=e.target.closest('[data-cell]');
+  if(cellBtn){
+    var key=cellBtn.dataset.cell,i=+cellBtn.dataset.i;
+    selected=(selected&&selected.pm===key&&selected.i===i)?null:{pm:key,i:i};
+    renderOutput();
+    var again=document.querySelector('[data-cell="'+key+'"][data-i="'+i+'"]');
+    if(again)again.focus();
+    return;
+  }
+  var b=e.target.closest('[data-act]');
+  if(!b)return;
+  var act=b.dataset.act,id=b.dataset.id,s=state.settings;
+  if(act==='addType'){s.types.push({id:uid(),name:'Neuer Projekttyp',hours:200});renderSettings();refreshProjectSelects();focusLast('typesBody');}
+  else if(act==='delType'){
+    remove(s.types,id);state.projects.forEach(function(p){if(p.type===id)p.type='';});
+    renderSettings();renderProjects();
+  }
+  else if(act==='addPhase'){s.phases.push({id:uid(),name:'Neue Phase',from:0,to:0,pct:0});renderSettings();focusLast('phasesBody');}
+  else if(act==='delPhase'){remove(s.phases,id);renderSettings();}
+  else if(act==='addPM'){state.pms.push({id:uid(),code:'',cap:140});renderPMs();refreshProjectSelects();focusLast('pmsBody');}
+  else if(act==='delPM'){
+    remove(state.pms,id);state.projects.forEach(function(p){if(p.pm===id)p.pm='';});
+    if(selected&&selected.pm===id)selected=null;
+    renderPMs();renderProjects();
+  }
+  else if(act==='addProj'){
+    var ev=Math.round(s.startYear)*12+clamp(Math.round(s.startMonth),1,12)-1+6;
+    state.projects.push({id:uid(),name:'',pm:state.pms[0]?state.pms[0].id:'',type:s.types[0]?s.types[0].id:'',cls:'B',hybrid:false,month:ev%12+1,year:Math.floor(ev/12)});
+    renderProjects();focusLast('projBody');
+  }
+  else if(act==='delProj'){remove(state.projects,id);renderProjects();}
+  else if(act==='example'){
+    if((state.pms.length||state.projects.length)&&!confirm('Vorhandene Eingaben durch Beispieldaten ersetzen?'))return;
+    loadExample();return;
+  }
+  else if(act==='clear'){
+    if(!confirm('Wirklich alle Eingaben löschen und die Einstellungen zurücksetzen?'))return;
+    state=defaults();selected=null;renderAll();return;
+  }
+  else if(act==='export'){exportJSON();return;}
+  renderOutput();
+});
+function focusLast(bodyId){
+  var rows=$(bodyId).rows,r=rows[rows.length-1],el=r&&r.querySelector('input,select');
+  if(el)el.focus();
+}
+
+/* ---------- Beispieldaten ---------- */
+function loadExample(){
+  state=defaults();selected=null;
+  var s=state.settings,t=s.types,start=s.startYear*12+s.startMonth-1;
+  var pm=function(code,cap){var p={id:uid(),code:code,cap:cap};state.pms.push(p);return p.id;};
+  var ab=pm('AB',140),ck=pm('CK',140),ms=pm('MS',100);
+  var pr=function(name,pmId,type,c,hyb,off){
+    var ev=start+off;
+    state.projects.push({id:uid(),name:name,pm:pmId,type:type.id,cls:c,hybrid:hyb,month:ev%12+1,year:Math.floor(ev/12)});
+  };
+  pr('Jahrestagung Kardiologie',ab,t[2],'A',true,6);
+  pr('Symposium Pflege',ab,t[0],'B',false,4);
+  pr('Fachkongress Radiologie',ck,t[1],'B',true,5);
+  pr('Herbsttagung Verband',ck,t[1],'C',false,9);
+  pr('Workshop-Tagung Onkologie',ms,t[0],'A',false,3);
+  pr('Hausärztetag',ms,t[1],'B',false,8);
+  renderAll();
+}
+
+/* ---------- Export / Import ---------- */
+function exportJSON(){
+  var data=JSON.stringify({app:'kapaplan',version:1,settings:state.settings,pms:state.pms,projects:state.projects},null,2);
+  var url=URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  var a=document.createElement('a');
+  a.href=url;a.download='kapaplan-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function sanitize(d){
+  if(!d||typeof d!=='object'||!d.settings||typeof d.settings!=='object')throw new Error('Unbekanntes Dateiformat');
+  var def=defaults(),ds=def.settings,s=d.settings;
+  var n=function(v,fb){var x=typeof v==='number'?v:parseFloat(v);return isFinite(x)?x:fb;};
+  var str=function(v,max){return String(v==null?'':v).slice(0,max);};
+  var arr=function(v){return Array.isArray(v)?v.filter(function(x){return x&&typeof x==='object';}).slice(0,500):[];};
+  var f=s.factors&&typeof s.factors==='object'?s.factors:{};
+  var out={settings:{
+    startMonth:clamp(Math.round(n(s.startMonth,ds.startMonth)),1,12),
+    startYear:Math.round(n(s.startYear,ds.startYear)),
+    months:clamp(Math.round(n(s.months,12)),1,60),
+    buffer:n(s.buffer,20),
+    factors:{A:n(f.A,1.5),B:n(f.B,1),C:n(f.C,0.6)},
+    hybrid:n(s.hybrid,100),
+    types:arr(s.types).map(function(t){return {id:str(t.id,40)||uid(),name:str(t.name,80),hours:n(t.hours,0)};}),
+    phases:arr(s.phases).map(function(p){return {id:str(p.id,40)||uid(),name:str(p.name,80),from:Math.round(n(p.from,0)),to:Math.round(n(p.to,0)),pct:n(p.pct,0)};})
+  },pms:arr(d.pms).map(function(p){return {id:str(p.id,40)||uid(),code:str(p.code,12),cap:n(p.cap,140)};}),projects:[]};
+  var has=function(list,id){return list.some(function(x){return x.id===id;});};
+  out.projects=arr(d.projects).map(function(p){
+    var pm=str(p.pm,40),type=str(p.type,40),c=str(p.cls,1).toUpperCase();
+    return {id:str(p.id,40)||uid(),name:str(p.name,120),pm:has(out.pms,pm)?pm:'',type:has(out.settings.types,type)?type:'',
+      cls:c==='A'||c==='B'||c==='C'?c:'B',hybrid:!!p.hybrid,
+      month:clamp(Math.round(n(p.month,1)),1,12),year:Math.round(n(p.year,ds.startYear))};
+  });
+  return out;
+}
+function importFile(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{state=sanitize(JSON.parse(String(r.result)));selected=null;renderAll();}
+    catch(err){alert('Die Datei konnte nicht gelesen werden: '+err.message);}
+    input.value='';
+  };
+  r.onerror=function(){alert('Die Datei konnte nicht gelesen werden.');input.value='';};
+  r.readAsText(file);
+}
+
+renderAll();
+})();
+</script>
+</body>
+</html>
