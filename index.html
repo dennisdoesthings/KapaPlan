@@ -181,7 +181,7 @@ footer{max-width:1200px;margin:0 auto;padding:6px 16px 28px;color:var(--muted);f
 
   <section>
     <h2>Feiertage</h2>
-    <p class="sub">Feiertage je Monat, die auf einen Arbeitstag fallen. Sie gelten für das ganze Team. Vorbelegt sind die bundesweiten Feiertage auf Montag bis Freitag; regionale Feiertage bitte ergänzen. Ein leeres Feld stellt den vorbelegten Wert wieder her.</p>
+    <p class="sub">Feiertage je Monat, die auf einen Arbeitstag fallen. Sie gelten für das ganze Team. Vorbelegt sind die gesetzlichen Feiertage in Hamburg; gezählt werden nur die, die auf Montag bis Freitag fallen. Die Werte lassen sich überschreiben. Ein leeres Feld stellt den vorbelegten Wert wieder her.</p>
     <div class="period">
       <button type="button" class="sec" data-act="absPrev" aria-label="Ein Jahr zurück">◀</button>
       <strong id="holLbl"></strong>
@@ -414,7 +414,8 @@ var absYear=viewYear;               // angezeigtes Jahr der Urlaubstabelle
 var shown=[];                       // Projekte in der Reihenfolge der Anzeige
 function nowIdx(){var d=new Date();return d.getFullYear()*12+d.getMonth();}
 function mKey(y,m){return y+'-'+(m<10?'0':'')+m;}
-// Bundesweite Feiertage, die auf Montag bis Freitag fallen: Anzahl je Monat (Index 0 = Januar)
+// Gesetzliche Feiertage in Hamburg (bundesweite plus Reformationstag am 31.10.), die auf Montag bis Freitag fallen:
+// Anzahl je Monat (Index 0 = Januar)
 var holCache={};
 function holDefault(y){
   if(holCache[y])return holCache[y];
@@ -423,7 +424,7 @@ function holDefault(y){
     h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
     em=Math.floor((h+l-7*m+114)/31),ed=(h+l-7*m+114)%31+1;
   var easter=function(off){return new Date(y,em-1,ed+off);};
-  var days=[new Date(y,0,1),easter(-2),easter(1),new Date(y,4,1),easter(39),easter(50),new Date(y,9,3),new Date(y,11,25),new Date(y,11,26)];
+  var days=[new Date(y,0,1),easter(-2),easter(1),new Date(y,4,1),easter(39),easter(50),new Date(y,9,3),new Date(y,9,31),new Date(y,11,25),new Date(y,11,26)];
   var out=[0,0,0,0,0,0,0,0,0,0,0,0];
   days.forEach(function(dt){var w=dt.getDay();if(w>=1&&w<=5)out[dt.getMonth()]++;});
   return holCache[y]=out;

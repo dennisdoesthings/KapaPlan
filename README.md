@@ -16,7 +16,7 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 1. Seite **Einstellungen** (einmalig):
    - **Team**: Kürzel, Kapazität sowie Meetings & Grundlast pro Monat je PM, dazu der Puffer in %.
    - **Urlaub**: Urlaubs- und Abwesenheitstage je PM und Monat, Jahr für Jahr.
-   - **Feiertage**: Feiertage je Monat für das ganze Team. Vorbelegt sind die bundesweiten Feiertage, die auf Montag bis Freitag fallen; regionale Feiertage lassen sich ergänzen.
+   - **Feiertage**: Feiertage je Monat für das ganze Team. Vorbelegt sind die gesetzlichen Feiertage in Hamburg (bundesweite Feiertage plus Reformationstag am 31. Oktober); gezählt werden nur die, die auf Montag bis Freitag fallen. Die Werte lassen sich überschreiben.
    - **Größenklassen**: S, M, L, XL mit Basisstunden, dazu ein allgemeiner Zuschlag in % auf alle Projekte (Standard 0).
    - **Erweiterte Einstellungen** (eingeklappt): Aufwandsfaktoren, Grenzen des Gesamtfaktors und Monatsprofil je Komplexität.
    - Jede Änderung wird automatisch im Browser gespeichert.
