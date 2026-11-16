@@ -15,7 +15,8 @@ Einfache Web-App zur Kapazitätsplanung für Projektmanager (PM) in einer Kongre
 
 1. Seite **Einstellungen** (einmalig):
    - **Team**: Kürzel, Kapazität sowie Meetings & Grundlast pro Monat je PM, dazu der Puffer in %.
-   - **Urlaub und Abwesenheit**: Abwesenheitstage je PM und Monat, Jahr für Jahr.
+   - **Urlaub**: Urlaubs- und Abwesenheitstage je PM und Monat, Jahr für Jahr.
+   - **Feiertage**: Feiertage je Monat für das ganze Team. Vorbelegt sind die bundesweiten Feiertage, die auf Montag bis Freitag fallen; regionale Feiertage lassen sich ergänzen.
    - **Größenklassen**: S, M, L, XL mit Basisstunden, dazu ein allgemeiner Zuschlag in % auf alle Projekte (Standard 0).
    - **Erweiterte Einstellungen** (eingeklappt): Aufwandsfaktoren, Grenzen des Gesamtfaktors und Monatsprofil je Komplexität.
    - Jede Änderung wird automatisch im Browser gespeichert.
@@ -53,7 +54,7 @@ Zum Ausprobieren: **Beispieldaten laden**.
   - *Thema / Teilbereich*: übernimmt den eingestellten Prozentanteil des Aufwands in jedem Monat (Standard 20 %).
   - *Nur vor Ort (Aufbau, Durchführung, Abbau)*: zusätzliche Stunden im Eventmonat (Standard 30 h), sie kommen zum Projektaufwand hinzu.
 - **Lage im Monat**: „Monatsanfang“ verschiebt das Monatsprofil um ein Drittel Monat nach vorn, „Monatsende“ um ein Drittel nach hinten.
-- **Verfügbare Kapazität** je Monat = (Kapazität − Meetings & Grundlast − Urlaub) × (1 − Puffer). Ein Urlaubstag zählt als ein Zwanzigstel der Monatskapazität.
+- **Verfügbare Kapazität** je Monat = (Kapazität − Meetings & Grundlast − Urlaub − Feiertage) × (1 − Puffer). Ein Urlaubs- oder Feiertag zählt als ein Zwanzigstel der Monatskapazität.
 - **Auslastung %** = Veranstaltungsstunden / verfügbare Kapazität
 - Farben: Grün unter 80 %, Gelb 80–100 %, Rot über 100 %
 
